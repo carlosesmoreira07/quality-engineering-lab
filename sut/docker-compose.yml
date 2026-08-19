@@ -1,0 +1,60 @@
+services:
+  database:
+    image: postgres:16.10-alpine@sha256:029660641a0cfc575b14f336ba448fb8a75fd595d42e1fa316b9fb4378742297
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-evershop}
+      POSTGRES_USER: ${POSTGRES_USER:-evershop}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-evershop_local_only}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  evershop:
+    image: evershop/evershop:2.2.1@sha256:d0823576f91b621e07b1fd913b326f8f463374615dc5301fd67b951123dd6967
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      DB_HOST: database
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-evershop}
+      DB_USER: ${POSTGRES_USER:-evershop}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-evershop_local_only}
+      DB_SSLMODE: disable
+    command:
+      - /bin/sh
+      - -c
+      - |
+        set -eu
+        npm run start &
+        app_pid=$$!
+        trap 'kill -TERM "$$app_pid" 2>/dev/null || true; wait "$$app_pid" || true' TERM INT
+        until node -e "require('http').get('http://127.0.0.1:3000', (response) => process.exit(response.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"; do
+          if ! kill -0 "$$app_pid" 2>/dev/null; then
+            wait "$$app_pid"
+            exit $$?
+          fi
+          sleep 2
+        done
+        node /app/qel-bootstrap.mjs
+        touch /tmp/qel-bootstrap-ready
+        wait "$$app_pid"
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/qel-bootstrap-ready && node -e \"require('http').get('http://127.0.0.1:3000', (response) => { let body = ''; response.on('data', (chunk) => body += chunk); response.on('end', () => process.exit(response.statusCode === 200 && body.includes('Produtos em destaque') ? 0 : 1)); }).on('error', () => process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    ports:
+      - "${SUT_PORT:-3000}:3000"
+    volumes:
+      - evershop_media:/app/media
+      - ./bootstrap.mjs:/app/qel-bootstrap.mjs:ro
+
+volumes:
+  evershop_media:
+  postgres_data:
