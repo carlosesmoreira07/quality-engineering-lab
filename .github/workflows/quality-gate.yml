@@ -36,6 +36,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Gate 1 — Dependency changes
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
@@ -47,7 +53,7 @@ jobs:
         working-directory: quality
         run: npm ci
 
-      - name: Gate 1 — Build and type safety
+      - name: Gate 2 — Build and type safety
         working-directory: quality
         run: npm run typecheck
 
@@ -68,7 +74,7 @@ jobs:
         with:
           k6-version: 2.1.0
 
-      - name: Gate 2 — Start healthy SUT
+      - name: Gate 3 — Start healthy SUT
         run: docker compose -f sut/docker-compose.yml up -d --wait --wait-timeout 300
 
       - name: Create ephemeral CI administrator
@@ -78,11 +84,11 @@ jobs:
           -e E2E_ADMIN_EMAIL -e E2E_ADMIN_PASSWORD evershop
           sh -c 'npm run user:create -- --email "$E2E_ADMIN_EMAIL" --password "$E2E_ADMIN_PASSWORD" --name "QEL CI Administrator"'
 
-      - name: Gate 3 — Functional and API automation
+      - name: Gate 4 — Functional, API and security automation
         working-directory: quality
         run: npm test
 
-      - name: Gate 4 — Performance smoke
+      - name: Gate 5 — Performance smoke
         if: ${{ github.event_name == 'pull_request' || inputs.performance_profile == 'smoke' }}
         working-directory: quality
         run: npm run performance:smoke
@@ -97,7 +103,7 @@ jobs:
         working-directory: quality
         run: npm run report:summary
 
-      - name: Gate 5 — Verify evidence outputs
+      - name: Gate 6 — Verify evidence outputs
         if: ${{ success() }}
         shell: bash
         run: |

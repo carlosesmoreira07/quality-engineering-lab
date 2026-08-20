@@ -38,6 +38,7 @@ Com o EverShop disponível em `http://localhost:3000`:
 npm test
 npm run test:web
 npm run test:api
+npm run test:security
 npm run test:smoke
 npm run test:ui
 npm run test:headed
@@ -57,7 +58,7 @@ Não são capturados screenshots de cada interação: ações como login, preenc
 
 ## Integração contínua
 
-Pull Requests para `main` executam o check **Quality Gate** no GitHub Actions. O fluxo valida TypeScript, inicia o SUT reproduzível com Docker Compose, exige que os quatro testes Web/API e o performance smoke passem e confirma a geração das evidências. Qualquer gate obrigatório com falha reprova o check.
+Pull Requests para `main` executam o check **Quality Gate** no GitHub Actions. O fluxo valida TypeScript, CodeQL, mudanças de dependências, inicia o SUT reproduzível com Docker Compose, exige que a suíte Web/API/segurança e o performance smoke passem e confirma a geração das evidências. Dependency Review bloqueia vulnerabilidades altas ou críticas introduzidas pelo PR; qualquer gate obrigatório com falha reprova o check.
 
 A execução publica por 14 dias um artifact com o HTML Reporter, resultados e attachments do Playwright, Quality Summary em PDF e summary JSON do k6. O repositório deve possuir os GitHub Actions Secrets `E2E_ADMIN_EMAIL` e `E2E_ADMIN_PASSWORD`; eles criam um administrador efêmero no SUT da execução e nunca devem ser gravados em arquivos ou logs.
 
@@ -65,12 +66,12 @@ Os cenários, workloads, thresholds e limitações de Performance Engineering es
 
 ## Decisões de design
 
-Playwright atende Web e API com `APIRequestContext` nativo. Page Objects existem somente para interações reutilizadas da Storefront; não há fixtures, clientes genéricos, classes base ou ferramentas externas de relatório nesta etapa.
+Playwright atende Web e API com `APIRequestContext` nativo. Os controles comportamentais comprovam autorização no SUT em execução; CodeQL, Dependency Review e os controles nativos de secrets analisam código e repositório, não substituem esses testes. Page Objects existem somente para interações reutilizadas da Storefront; não há fixtures, clientes genéricos, classes base ou ferramentas externas de relatório nesta etapa.
 
 ## Dados de teste e riscos
 
 Os cenários de catálogo usam os dados fixos do seed do SUT. O cenário Admin → Storefront cria um produto exclusivo e o remove ao final. A API pública cria um carrinho isolado; o reset documentado do SUT descarta esses dados efêmeros.
 
-Esta fundação cobre `RISK-002`, `RISK-004`, `RISK-006`, `RISK-007`, `RISK-010` e `RISK-013`. `RISK-009` e `RISK-015` permanecem fora desta entrega porque a baseline atual não possui configuração de frete e pagamento que permita concluir e cancelar pedidos sem ampliar o escopo do SUT. Segurança (`RISK-005`, `RISK-016`) pertence ao QEL-7; performance (`RISK-014`, `RISK-019`), ao QEL-6.
+Esta fundação cobre `RISK-002`, `RISK-004`, `RISK-005`, `RISK-006`, `RISK-007`, `RISK-010`, `RISK-013` e `RISK-016`. Os testes de segurança criam dois clientes e um recurso totalmente sintéticos, comprovam isolamento horizontal e bloqueio administrativo e removem os dados ao final. A cobertura é deliberadamente restrita a essas fronteiras: não representa pentest completo, DAST amplo nem cobertura integral do OWASP Top 10. `RISK-009` e `RISK-015` permanecem fora desta entrega porque a baseline atual não possui configuração de frete e pagamento que permita concluir e cancelar pedidos sem ampliar o escopo do SUT.
 
 O EverShop limita os endpoints de login a oito tentativas por IP a cada 15 minutos. Execuções locais repetidas nesse intervalo podem receber HTTP 429 e devem aguardar a janela ou reiniciar o SUT antes de nova validação.
