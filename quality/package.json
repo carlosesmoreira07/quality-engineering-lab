@@ -10,6 +10,7 @@
     "test": "playwright test",
     "test:web": "playwright test tests/web",
     "test:api": "playwright test tests/api",
+    "test:security": "playwright test --grep @security",
     "test:smoke": "playwright test --grep @smoke",
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",

@@ -12,10 +12,12 @@ const outputPath = path.join(repositoryDir, 'output', 'pdf', 'qel-4-test-evidenc
 const riskControls = {
   'RISK-002': 'Preço permanece consistente entre catálogo, Storefront e carrinho.',
   'RISK-004': 'Credenciais inválidas não concedem acesso à conta.',
+  'RISK-005': 'Um cliente não manipula recursos pertencentes a outro cliente.',
   'RISK-006': 'Produto, quantidade e valores permanecem íntegros no carrinho.',
   'RISK-007': 'Subtotal e total são calculados corretamente.',
   'RISK-010': 'Pedido incompleto é rejeitado pela API.',
-  'RISK-013': 'Alteração administrativa é propagada até a experiência do cliente.'
+  'RISK-013': 'Alteração administrativa é propagada até a experiência do cliente.',
+  'RISK-016': 'Cliente comum ou anônimo não acessa operações administrativas de pedidos.'
 };
 
 function escapeHtml(value = '') {
@@ -111,7 +113,17 @@ function riskTableRows(tests, riskIds) {
 
 function structuredEvidenceMarkup(evidence) {
   if (!evidence) return '';
-  const operations = evidence.operations ?? [evidence];
+  if (evidence.attempt && !evidence.operations && !evidence.attempts) {
+    return `<div class="structured-evidence">
+      <div class="operation">
+        <strong>${escapeHtml(evidence.attempt)}</strong>
+        <span>Controle: ${escapeHtml(evidence.control)}</span>
+        <span>Resultado: ${escapeHtml(evidence.result)}</span>
+        <span>Decisão: ${escapeHtml(evidence.decision)}</span>
+      </div>
+    </div>`;
+  }
+  const operations = evidence.operations ?? evidence.attempts ?? [evidence];
   return `<div class="structured-evidence">
     ${operations
       .map(
@@ -140,8 +152,15 @@ async function scenarioCard(test) {
       (attachment.name.startsWith('evidencia-api-') || attachment.name.startsWith('evidencia-admin-')) &&
       attachment.contentType === 'application/json'
   );
+  const securityAttachments = test.attachments.filter(
+    (attachment) =>
+      attachment.name.startsWith('evidencia-seguranca-') &&
+      attachment.contentType === 'application/json'
+  );
   const imageUrls = (await Promise.all(businessImages.map(imageDataUrl))).filter(Boolean);
-  const structured = (await Promise.all(structuredAttachments.map(jsonEvidence))).filter(Boolean);
+  const structured = (
+    await Promise.all([...structuredAttachments, ...securityAttachments].map(jsonEvidence))
+  ).filter(Boolean);
   const hasEvidence = imageUrls.length > 0 || structured.length > 0;
 
   return `<article class="scenario-card">
@@ -190,7 +209,7 @@ const html = `<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <title>QEL-4 Quality Summary</title>
+  <title>Quality Summary</title>
   <style>
     @page { size: A4 landscape; margin: 0; }
     * { box-sizing: border-box; }
@@ -248,7 +267,7 @@ const html = `<!doctype html>
     .objective p { margin: 0; font-size: 9pt; line-height: 1.45; }
     table { width: 100%; border-collapse: collapse; font-size: 8pt; }
     th { background: var(--navy-2); color: white; text-align: left; padding: 2.3mm 3mm; }
-    td { border: 1px solid var(--line); padding: 1.7mm 3mm; vertical-align: middle; }
+    td { border: 1px solid var(--line); padding: 1.3mm 3mm; vertical-align: middle; }
     tbody tr:nth-child(even) td { background: #f8fafc; }
     .risk-id { width: 28mm; font-weight: 700; color: var(--navy); }
     .risk-result { width: 31mm; text-align: center; font-weight: 700; }
@@ -262,10 +281,10 @@ const html = `<!doctype html>
     .page-title h2 { font-size: 19pt; margin: 0; }
     .page-title p { margin: 1.5mm 0 0; font-size: 8pt; color: var(--muted); }
     .evidence-count { font-size: 8pt; color: var(--muted); text-align: right; }
-    .scenario-grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 80mm 80mm; gap: 5mm; }
-    .scenario-card { border: 1px solid var(--line); border-radius: 2.5mm; padding: 4mm; overflow: hidden; background: white; }
+    .scenario-grid { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: 74mm 74mm; gap: 4mm; }
+    .scenario-card { border: 1px solid var(--line); border-radius: 2.5mm; padding: 3mm; overflow: hidden; background: white; }
     .scenario-card header { display: flex; justify-content: space-between; gap: 4mm; align-items: flex-start; margin-bottom: 2mm; }
-    .scenario-card h3 { margin: 0 0 1.2mm; font-size: 11pt; line-height: 1.15; color: var(--navy); }
+    .scenario-card h3 { margin: 0 0 1mm; font-size: 10pt; line-height: 1.12; color: var(--navy); }
     .risk-list { display: flex; gap: 1.2mm; flex-wrap: wrap; }
     .risk-list span { background: #edf4f7; color: var(--cyan); border-radius: 8px; padding: .7mm 1.8mm; font-size: 6.5pt; font-weight: 600; }
     .scenario-result { min-width: 21mm; text-align: center; border-radius: 2mm; padding: 1.7mm 2mm; }
@@ -273,17 +292,17 @@ const html = `<!doctype html>
     .scenario-result.fail { background: var(--red-bg); color: var(--red); }
     .scenario-result strong { display: block; font-size: 9pt; }
     .scenario-result span { display: block; font-size: 6.5pt; margin-top: .5mm; }
-    .scenario-card p { margin: 1.2mm 0; font-size: 7.3pt; line-height: 1.3; }
-    .evidence-grid { height: 34mm; margin: 2mm 0; display: grid; place-items: center; overflow: hidden; background: var(--soft); border-radius: 1.5mm; border: 1px solid #e5ebef; }
+    .scenario-card p { margin: 1mm 0; font-size: 6.6pt; line-height: 1.22; }
+    .evidence-grid { height: 28mm; margin: 1.5mm 0; display: grid; place-items: center; overflow: hidden; background: var(--soft); border-radius: 1.5mm; border: 1px solid #e5ebef; }
     .evidence-grid.split { grid-template-columns: .9fr 1.1fr; gap: 2mm; padding: 1.5mm; }
     figure { margin: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
-    figure img { max-width: 100%; max-height: 32mm; object-fit: contain; display: block; }
+    figure img { max-width: 100%; max-height: 26mm; object-fit: contain; display: block; }
     .structured-evidence { width: 100%; padding: 1.8mm 2mm; display: grid; gap: 1.3mm; }
-    .operation { display: grid; grid-template-columns: 1fr; gap: .4mm; font-size: 6.2pt; line-height: 1.2; }
+    .operation { display: grid; grid-template-columns: 1fr; gap: .3mm; font-size: 5.7pt; line-height: 1.15; }
     .operation strong { color: var(--navy); }
     .operation span { color: var(--muted); }
     .no-evidence { color: var(--muted); font-size: 7pt; }
-    .validations { color: var(--muted); font-size: 6.6pt !important; line-height: 1.2 !important; }
+    .validations { color: var(--muted); font-size: 5.9pt !important; line-height: 1.15 !important; }
     .footer { position: absolute; left: 13mm; right: 13mm; bottom: 4.5mm; display: flex; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 1.5mm; color: var(--muted); font-size: 6.5pt; }
   </style>
 </head>
@@ -293,7 +312,7 @@ const html = `<!doctype html>
     <div class="identity">
       <div>
         <h1>QUALITY SUMMARY</h1>
-        <p>QEL-4 - Fundação de automação funcional Web e API</p>
+        <p>Controles funcionais, API e segurança orientados a risco</p>
       </div>
       <div class="meta">
         <b>Commit:</b> ${escapeHtml(commit)}<br />
@@ -305,7 +324,7 @@ const html = `<!doctype html>
       <div class="gate">
         <small>QUALITY GATE</small>
         <strong>${allApproved ? 'APROVADO' : 'REPROVADO'}</strong>
-        <span>${allApproved ? 'Execução atende ao escopo de riscos do QEL-4.' : 'Execução possui cenários não aprovados.'}</span>
+        <span>${allApproved ? 'Execução atende ao escopo de riscos exercitado.' : 'Execução possui cenários não aprovados.'}</span>
       </div>
       <div class="gate-metrics">
         <div class="metric"><strong>${passed}/${total}</strong><span>testes aprovados</span></div>
@@ -316,7 +335,7 @@ const html = `<!doctype html>
     </div>
     <div class="objective">
       <h2>Objetivo</h2>
-      <p>Validar os controles prioritários de preço, autenticação, integridade do carrinho, cálculo, bloqueio de pedido incompleto e propagação Admin -> Storefront, cobrindo ${escapeHtml(riskIds.join(', '))}.</p>
+      <p>Validar controles prioritários de preço, autenticação, integridade transacional, propagação Admin -> Storefront e fronteiras de autorização, cobrindo ${escapeHtml(riskIds.join(', '))}.</p>
     </div>
     <h2>Cobertura por risco</h2>
     <table>
@@ -327,8 +346,8 @@ const html = `<!doctype html>
       <strong>${allApproved ? 'Aprovado para evolução' : 'Evolução bloqueada'}</strong>
       <span>${allApproved ? 'Todos os cenários e riscos deste escopo foram aprovados; não há bloqueio conhecido para a continuidade do laboratório.' : 'Existem cenários não aprovados. Corrigir as falhas e executar novamente antes de seguir.'}</span>
     </div>
-    <p class="residual"><b>Risco residual:</b> esta execução não representa cobertura total do produto. Fluxos completos de frete/pagamento/cancelamento, segurança e performance permanecem planejados para cards posteriores.</p>
-    <div class="footer"><span>QEL-4 | Quality Summary orientado a risco</span><span>Página 1 de 2</span></div>
+    <p class="residual"><b>Risco residual:</b> esta execução não representa pentest nem cobertura total do produto. Fluxos completos de frete, pagamento e cancelamento permanecem planejados para cards posteriores.</p>
+    <div class="footer"><span>Quality Summary orientado a risco</span><span>Página 1 de 2</span></div>
   </section>
   <section class="page">
     <div class="topline"></div>
