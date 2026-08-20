@@ -10,10 +10,21 @@ test(
     annotation: [
       { type: 'risk', description: 'RISK-002' },
       { type: 'risk', description: 'RISK-006' },
-      { type: 'risk', description: 'RISK-007' }
+      { type: 'risk', description: 'RISK-007' },
+      { type: 'behavior', description: 'Integridade do produto no carrinho' },
+      {
+        type: 'intent',
+        description: 'Garante que seleção, quantidade, preço e subtotal permaneçam corretos no carrinho.'
+      },
+      {
+        type: 'flow',
+        description: 'Produto configurado -> item adicionado -> carrinho preserva seleção e valores'
+      },
+      { type: 'validation', description: 'Produto, SKU, variante e quantidade correspondem à seleção' },
+      { type: 'validation', description: 'Preço da linha e subtotal correspondem a duas unidades' }
     ]
   },
-  async ({ page }) => {
+  async ({ page }, testInfo) => {
     const product = new ProductPage(page);
     const cart = new CartPage(page);
 
@@ -41,5 +52,10 @@ test(
     await expect(main.getByText('2', { exact: true })).toBeVisible();
     await expect(main.getByText('Sub total', { exact: true }).locator('..')).toContainText('$70.00');
     await expect(main.getByText('$70.00', { exact: true }).last()).toBeVisible();
+
+    await testInfo.attach('evidencia-negocio-integridade-carrinho', {
+      body: await main.screenshot(),
+      contentType: 'image/png'
+    });
   }
 );

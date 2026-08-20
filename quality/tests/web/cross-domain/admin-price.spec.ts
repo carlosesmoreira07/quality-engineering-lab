@@ -15,10 +15,22 @@ test(
     tag: ['@web', '@admin', '@cross-domain'],
     annotation: [
       { type: 'risk', description: 'RISK-002' },
-      { type: 'risk', description: 'RISK-013' }
+      { type: 'risk', description: 'RISK-013' },
+      { type: 'behavior', description: 'Propagação de preço do Admin para a Storefront' },
+      {
+        type: 'intent',
+        description: 'Comprova que uma alteração administrativa chega ao cliente e permanece correta no carrinho.'
+      },
+      {
+        type: 'flow',
+        description: 'Admin altera preço -> Storefront recebe alteração -> carrinho preserva o preço correto'
+      },
+      { type: 'validation', description: 'Admin aceita a alteração para o novo preço' },
+      { type: 'validation', description: 'Storefront exibe o preço atualizado' },
+      { type: 'validation', description: 'Carrinho calcula quantidade e subtotal com o preço atualizado' }
     ]
   },
-  async ({ page }) => {
+  async ({ page }, testInfo) => {
     const adminEmail = process.env.E2E_ADMIN_EMAIL;
     const adminPassword = process.env.E2E_ADMIN_PASSWORD;
     if (!adminEmail || !adminPassword) {
@@ -74,6 +86,22 @@ test(
           data: { price: updatedPrice }
         });
         expect(updateResponse.ok()).toBe(true);
+
+        await testInfo.attach('evidencia-admin-alteracao-preco', {
+          body: Buffer.from(
+            JSON.stringify(
+              {
+                operation: 'PATCH /api/products/{productId}',
+                expected: `HTTP 2xx e preço administrativo ${updatedPrice.toFixed(2)}`,
+                obtained: `HTTP ${updateResponse.status()} com alteração aceita`,
+                businessRule: 'O Admin aceita a alteração que será observada pelo cliente.'
+              },
+              null,
+              2
+            )
+          ),
+          contentType: 'application/json'
+        });
       });
 
       await test.step('Validação na Storefront: observar preço e cálculo atualizados', async () => {
@@ -88,6 +116,11 @@ test(
         await expect(drawerItem).toContainText('2');
         await expect(drawerItem).toContainText('$85.00');
         await expect(cart.drawer.getByText('Subtotal:', { exact: true }).locator('..')).toContainText('$85.00');
+
+        await testInfo.attach('evidencia-negocio-admin-storefront-carrinho', {
+          body: await drawerItem.screenshot(),
+          contentType: 'image/png'
+        });
       });
     } finally {
       if (productId) {

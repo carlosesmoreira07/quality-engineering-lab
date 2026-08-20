@@ -4,3 +4,4 @@ quality/playwright-report/
 quality/test-results/
 quality/.auth/
 quality/.env
+output/pdf/qel-4-test-evidence.pdf

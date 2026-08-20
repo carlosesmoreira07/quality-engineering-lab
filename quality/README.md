@@ -49,6 +49,12 @@ Use UI Mode no desenvolvimento normal para executar a suíte, arquivo ou teste i
 
 Defina `BASE_URL` apenas quando o SUT estiver em outro endereço. A execução padrão continua headless, usa Chromium e nenhum retry para manter a baseline inicial simples e determinística.
 
+## Evidências
+
+Evidência de negócio é anexada ao teste somente nos checkpoints que comprovam uma regra funcional, como rejeição de autenticação, integridade do carrinho e propagação de preço. Evidência diagnóstica permanece separada e é fornecida pelo screenshot automático de falha, trace e HTML Reporter nativos.
+
+Não são capturados screenshots de cada interação: ações como login, preenchimento e navegação intermediária gerariam ruído sem aumentar a confiança e ampliariam o custo de manutenção. Após uma execução, use `npm run report` para a análise de Engenharia e `npm run report:summary` para gerar o Quality Summary executivo em PDF.
+
 ## Decisões de design
 
 Playwright atende Web e API com `APIRequestContext` nativo. Page Objects existem somente para interações reutilizadas da Storefront; não há fixtures, clientes genéricos, classes base ou ferramentas externas de relatório nesta etapa.

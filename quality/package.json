@@ -15,6 +15,7 @@
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
     "report": "playwright show-report",
+    "report:summary": "node scripts/generate-quality-summary.mjs",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
