@@ -1,0 +1,4 @@
+interface:
+  display_name: "QE Impact Analysis"
+  short_description: "Analisa impacto, riscos, controles e gaps"
+  default_prompt: "Analise o impacto de qualidade do card Jira informado e apresente riscos, cobertura existente, gaps e recomendações para revisão humana."
