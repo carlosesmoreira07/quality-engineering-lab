@@ -22,7 +22,14 @@ test(
     const adminEmail = process.env.E2E_ADMIN_EMAIL;
     const adminPassword = process.env.E2E_ADMIN_PASSWORD;
     if (!adminEmail || !adminPassword) {
-      throw new Error('E2E_ADMIN_EMAIL e E2E_ADMIN_PASSWORD são obrigatórios para o cenário cross-domain.');
+      const missingCredentials = [
+        !adminEmail && 'E2E_ADMIN_EMAIL',
+        !adminPassword && 'E2E_ADMIN_PASSWORD'
+      ].filter(Boolean);
+      throw new Error(
+        `Credenciais obrigatórias ausentes: ${missingCredentials.join(', ')}. ` +
+          'Configure-as em quality/.env; use quality/.env.example como modelo.'
+      );
     }
 
     const suffix = randomUUID();
@@ -33,7 +40,7 @@ test(
     const updatedPrice = 42.5;
     let productId: string | undefined;
 
-    await test.step('autenticar e criar dado controlado no Admin', async () => {
+    await test.step('Estado inicial: autenticar no Admin e criar produto controlado', async () => {
       await page.goto('/admin/login');
       await page.getByPlaceholder('Email').fill(adminEmail);
       await page.getByPlaceholder('Password').fill(adminPassword);
@@ -62,14 +69,14 @@ test(
     });
 
     try {
-      await test.step('alterar o preço pela API administrativa', async () => {
+      await test.step('Alteração administrativa: atualizar o preço pela API', async () => {
         const updateResponse = await page.request.patch(`/api/products/${productId}`, {
           data: { price: updatedPrice }
         });
         expect(updateResponse.ok()).toBe(true);
       });
 
-      await test.step('observar o novo preço e o cálculo na Storefront', async () => {
+      await test.step('Validação na Storefront: observar preço e cálculo atualizados', async () => {
         const product = new ProductPage(page);
         const cart = new CartPage(page);
         await product.visit(`/accessories/${urlKey}`);
@@ -84,8 +91,10 @@ test(
       });
     } finally {
       if (productId) {
-        const deleteResponse = await page.request.delete(`/api/products/${productId}`);
-        expect(deleteResponse.ok()).toBe(true);
+        await test.step('Restauração: remover o produto controlado', async () => {
+          const deleteResponse = await page.request.delete(`/api/products/${productId}`);
+          expect(deleteResponse.ok()).toBe(true);
+        });
       }
     }
   }

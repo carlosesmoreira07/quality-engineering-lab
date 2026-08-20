@@ -12,12 +12,15 @@
     "test:api": "playwright test tests/api",
     "test:smoke": "playwright test --grep @smoke",
     "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
     "report": "playwright show-report",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",
     "@types/node": "22.20.1",
+    "dotenv": "17.4.2",
     "typescript": "7.0.2"
   }
 }

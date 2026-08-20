@@ -13,7 +13,7 @@ Os testes ficam organizados por interface e domínio em `tests/web` e `tests/api
 - Node.js 22 ou superior;
 - Chromium instalado pelo Playwright;
 - SUT iniciado conforme [`sut/README.md`](../sut/README.md);
-- usuário administrador local para o cenário cross-domain, informado somente em tempo de execução por `E2E_ADMIN_EMAIL` e `E2E_ADMIN_PASSWORD`.
+- usuário administrador local para o cenário cross-domain, configurado por `E2E_ADMIN_EMAIL` e `E2E_ADMIN_PASSWORD` no ambiente ou em `quality/.env`.
 
 Na pasta `quality`, execute:
 
@@ -23,6 +23,8 @@ npx playwright install chromium
 ```
 
 Nenhuma credencial real ou estado autenticado deve ser versionado.
+
+Para a configuração local opcional, copie `.env.example` para `.env` e preencha as credenciais. Variáveis já definidas no ambiente do processo têm precedência, permitindo que a CI dispense esse arquivo.
 
 ## Autenticação
 
@@ -37,10 +39,15 @@ npm test
 npm run test:web
 npm run test:api
 npm run test:smoke
+npm run test:ui
+npm run test:headed
+npm run test:debug
 npm run typecheck
 ```
 
-Defina `BASE_URL` apenas quando o SUT estiver em outro endereço. O relatório HTML nativo é gerado em `playwright-report`; traces e screenshots são retidos somente em falhas. A execução usa Chromium e nenhum retry para manter a baseline inicial simples e determinística.
+Use UI Mode no desenvolvimento normal para executar a suíte, arquivo ou teste individual, explorar timeline, ações, DOM antes/depois, console/network e locator picker, além de depurar falhas. Use headed para assistir à execução e debug para investigar passo a passo com o Playwright Inspector. O relatório HTML e o trace retido em falhas apoiam a análise posterior.
+
+Defina `BASE_URL` apenas quando o SUT estiver em outro endereço. A execução padrão continua headless, usa Chromium e nenhum retry para manter a baseline inicial simples e determinística.
 
 ## Decisões de design
 
