@@ -1,0 +1,75 @@
+name: Controlled Regression Experiments
+
+on:
+  workflow_dispatch:
+    inputs:
+      experiment:
+        description: Controlled regression to execute
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - EXP-001
+          - EXP-002
+          - EXP-003
+
+permissions:
+  contents: read
+
+concurrency:
+  group: controlled-regression-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  detection:
+    name: Detection ${{ inputs.experiment }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: quality/package-lock.json
+
+      - name: Install quality dependencies
+        working-directory: quality
+        run: npm ci
+
+      - name: Install Chromium
+        working-directory: quality
+        run: npx playwright install --with-deps chromium
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1.2.1
+        with:
+          k6-version: 2.1.0
+
+      - name: Start healthy SUT
+        run: docker compose -f sut/docker-compose.yml up -d --wait --wait-timeout 300
+
+      - name: Execute GREEN-RED-GREEN experiment
+        working-directory: quality
+        env:
+          BASE_URL: http://localhost:3000
+          EXPERIMENT_PROPAGATE_CONTROL_FAILURE: 'true'
+        run: node ../experiments/run.mjs "${{ inputs.experiment }}"
+
+      - name: Upload experiment evidence
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: controlled-regression-${{ inputs.experiment }}-${{ github.run_id }}
+          path: experiments/results/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Stop SUT
+        if: always()
+        run: docker compose -f sut/docker-compose.yml down --volumes --remove-orphans
