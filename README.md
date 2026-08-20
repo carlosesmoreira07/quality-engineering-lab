@@ -13,3 +13,7 @@ O laboratório utiliza o EverShop como uma aplicação realista para a evoluçã
 ## Automação de testes
 
 A fundação da automação orientada a riscos está documentada em [quality/README.md](quality/README.md).
+
+## Integração contínua
+
+Pull Requests para `main` são avaliados pelo check **Quality Gate**. A decisão arquitetural e os gates obrigatórios estão registrados em [ADR 0003](docs/adr/0003-ci-quality-gates.md).
