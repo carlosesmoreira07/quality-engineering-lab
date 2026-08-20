@@ -107,7 +107,22 @@ test(
       await test.step('Validação na Storefront: observar preço e cálculo atualizados', async () => {
         const product = new ProductPage(page);
         const cart = new CartPage(page);
-        await product.visit(`/accessories/${urlKey}`);
+        const storefrontPath = `/accessories/${urlKey}`;
+
+        await expect
+          .poll(
+            async () => {
+              await product.visit(storefrontPath);
+              return product.heading.textContent();
+            },
+            {
+              message: 'Aguardar o produto ficar visível na navegação da Storefront',
+              timeout: 15_000,
+              intervals: [250, 500, 1_000]
+            }
+          )
+          .toBe(name);
+
         await expect(product.heading).toHaveText(name);
         await expect(product.price('$42.50')).toBeVisible();
         await product.setQuantity(2);

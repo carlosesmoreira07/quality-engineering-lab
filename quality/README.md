@@ -57,9 +57,11 @@ Não são capturados screenshots de cada interação: ações como login, preenc
 
 ## Integração contínua
 
-Pull Requests para `main` executam o check **Quality Gate** no GitHub Actions. O fluxo valida TypeScript, inicia o SUT reproduzível com Docker Compose, exige que os quatro testes Web/API passem e confirma a geração das evidências. Qualquer gate obrigatório com falha reprova o check.
+Pull Requests para `main` executam o check **Quality Gate** no GitHub Actions. O fluxo valida TypeScript, inicia o SUT reproduzível com Docker Compose, exige que os quatro testes Web/API e o performance smoke passem e confirma a geração das evidências. Qualquer gate obrigatório com falha reprova o check.
 
-A execução publica por 14 dias um artifact com o HTML Reporter, resultados e attachments do Playwright e o Quality Summary em PDF. O repositório deve possuir os GitHub Actions Secrets `E2E_ADMIN_EMAIL` e `E2E_ADMIN_PASSWORD`; eles criam um administrador efêmero no SUT da execução e nunca devem ser gravados em arquivos ou logs.
+A execução publica por 14 dias um artifact com o HTML Reporter, resultados e attachments do Playwright, Quality Summary em PDF e summary JSON do k6. O repositório deve possuir os GitHub Actions Secrets `E2E_ADMIN_EMAIL` e `E2E_ADMIN_PASSWORD`; eles criam um administrador efêmero no SUT da execução e nunca devem ser gravados em arquivos ou logs.
+
+Os cenários, workloads, thresholds e limitações de Performance Engineering estão documentados em [`performance/README.md`](performance/README.md). O load controlado é manual e não faz parte de todo Pull Request.
 
 ## Decisões de design
 

@@ -5,6 +5,15 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      performance_profile:
+        description: Cenário de performance
+        required: true
+        default: smoke
+        type: choice
+        options:
+          - smoke
+          - load
 
 concurrency:
   group: quality-gate-${{ github.event.pull_request.number || github.ref }}
@@ -54,6 +63,11 @@ jobs:
         working-directory: quality
         run: npx playwright install --with-deps chromium
 
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1.2.1
+        with:
+          k6-version: 2.1.0
+
       - name: Gate 2 — Start healthy SUT
         run: docker compose -f sut/docker-compose.yml up -d --wait --wait-timeout 300
 
@@ -68,18 +82,29 @@ jobs:
         working-directory: quality
         run: npm test
 
+      - name: Gate 4 — Performance smoke
+        if: ${{ github.event_name == 'pull_request' || inputs.performance_profile == 'smoke' }}
+        working-directory: quality
+        run: npm run performance:smoke
+
+      - name: Controlled load — Manual execution
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.performance_profile == 'load' }}
+        working-directory: quality
+        run: npm run performance:load
+
       - name: Generate Quality Summary
         if: ${{ !cancelled() && hashFiles('quality/test-results/results.json') != '' }}
         working-directory: quality
         run: npm run report:summary
 
-      - name: Gate 4 — Verify evidence outputs
+      - name: Gate 5 — Verify evidence outputs
         if: ${{ success() }}
         shell: bash
         run: |
           test -f quality/test-results/results.json
           test -f quality/playwright-report/index.html
           test -f output/pdf/qel-4-test-evidence.pdf
+          compgen -G 'quality/performance-*-summary.json' > /dev/null
 
       - name: Publish test evidence
         if: ${{ !cancelled() }}
@@ -89,6 +114,7 @@ jobs:
           path: |
             quality/playwright-report/
             quality/test-results/
+            quality/performance-*-summary.json
             output/pdf/qel-4-test-evidence.pdf
           if-no-files-found: warn
           retention-days: 14
