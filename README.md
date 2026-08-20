@@ -17,3 +17,7 @@ A fundação da automação orientada a riscos está documentada em [quality/REA
 ## Integração contínua
 
 Pull Requests para `main` são avaliados pelo check **Quality Gate**. A decisão arquitetural e os gates obrigatórios estão registrados em [ADR 0003](docs/adr/0003-ci-quality-gates.md).
+
+## Performance Engineering
+
+A estratégia enxuta com k6 OSS está documentada em [quality/performance/README.md](quality/performance/README.md) e na [ADR 0004](docs/adr/0004-performance-testing-strategy.md).

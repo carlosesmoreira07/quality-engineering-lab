@@ -16,6 +16,8 @@
     "test:debug": "playwright test --debug",
     "report": "playwright show-report",
     "report:summary": "node scripts/generate-quality-summary.mjs",
+    "performance:smoke": "node performance/run.mjs smoke",
+    "performance:load": "node performance/run.mjs load",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
