@@ -9,3 +9,7 @@ O projeto está em desenvolvimento e encontra-se atualmente na **Sprint 1 - MVP 
 ## Sistema Sob Teste
 
 O laboratório utiliza o EverShop como uma aplicação realista para a evolução das práticas de Quality Engineering. Consulte as [instruções do Sistema Sob Teste](sut/README.md) e a [decisão sobre a estratégia de baseline](docs/adr/0001-sut-baseline-strategy.md).
+
+## Automação de testes
+
+A fundação da automação orientada a riscos está documentada em [quality/README.md](quality/README.md).

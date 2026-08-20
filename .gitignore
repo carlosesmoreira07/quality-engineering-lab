@@ -1,1 +1,6 @@
 sut/.env
+quality/node_modules/
+quality/playwright-report/
+quality/test-results/
+quality/.auth/
+quality/.env

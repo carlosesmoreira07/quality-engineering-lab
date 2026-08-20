@@ -1,0 +1,92 @@
+import { randomUUID } from 'node:crypto';
+import { expect, test } from '@playwright/test';
+import { CartPage } from '../../../src/pages/storefront/cart-page.js';
+import { ProductPage } from '../../../src/pages/storefront/product-page.js';
+
+interface ProductResponse {
+  data: {
+    uuid: string;
+  };
+}
+
+test(
+  'propaga alteração de preço do Admin para a Storefront @smoke',
+  {
+    tag: ['@web', '@admin', '@cross-domain'],
+    annotation: [
+      { type: 'risk', description: 'RISK-002' },
+      { type: 'risk', description: 'RISK-013' }
+    ]
+  },
+  async ({ page }) => {
+    const adminEmail = process.env.E2E_ADMIN_EMAIL;
+    const adminPassword = process.env.E2E_ADMIN_PASSWORD;
+    if (!adminEmail || !adminPassword) {
+      throw new Error('E2E_ADMIN_EMAIL e E2E_ADMIN_PASSWORD são obrigatórios para o cenário cross-domain.');
+    }
+
+    const suffix = randomUUID();
+    const sku = `QEL4-${suffix}`;
+    const name = `QEL 4 Product ${suffix}`;
+    const urlKey = `qel-4-product-${suffix}`;
+    const initialPrice = 41.25;
+    const updatedPrice = 42.5;
+    let productId: string | undefined;
+
+    await test.step('autenticar e criar dado controlado no Admin', async () => {
+      await page.goto('/admin/login');
+      await page.getByPlaceholder('Email').fill(adminEmail);
+      await page.getByPlaceholder('Password').fill(adminPassword);
+      await page.getByRole('button', { name: 'Sign In' }).click();
+      await expect(page).toHaveURL(/\/admin$/);
+
+      const createResponse = await page.request.post('/api/products', {
+        data: {
+          name,
+          sku,
+          url_key: urlKey,
+          price: initialPrice,
+          qty: 10,
+          group_id: 1,
+          category_id: 4,
+          status: true,
+          visibility: true,
+          manage_stock: true,
+          stock_availability: true,
+          no_shipping_required: true
+        }
+      });
+      const createBody = (await createResponse.json()) as ProductResponse;
+      expect(createResponse.ok(), JSON.stringify(createBody)).toBe(true);
+      productId = createBody.data.uuid;
+    });
+
+    try {
+      await test.step('alterar o preço pela API administrativa', async () => {
+        const updateResponse = await page.request.patch(`/api/products/${productId}`, {
+          data: { price: updatedPrice }
+        });
+        expect(updateResponse.ok()).toBe(true);
+      });
+
+      await test.step('observar o novo preço e o cálculo na Storefront', async () => {
+        const product = new ProductPage(page);
+        const cart = new CartPage(page);
+        await product.visit(`/accessories/${urlKey}`);
+        await expect(product.heading).toHaveText(name);
+        await expect(product.price('$42.50')).toBeVisible();
+        await product.setQuantity(2);
+        await product.addToCart.click();
+        const drawerItem = cart.drawer.getByRole('listitem').filter({ hasText: name });
+        await expect(drawerItem).toContainText('2');
+        await expect(drawerItem).toContainText('$85.00');
+        await expect(cart.drawer.getByText('Subtotal:', { exact: true }).locator('..')).toContainText('$85.00');
+      });
+    } finally {
+      if (productId) {
+        const deleteResponse = await page.request.delete(`/api/products/${productId}`);
+        expect(deleteResponse.ok()).toBe(true);
+      }
+    }
+  }
+);

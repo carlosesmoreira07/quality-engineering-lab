@@ -1,0 +1,45 @@
+import { expect, test } from '@playwright/test';
+import { baselineProduct } from '../../../src/data/baseline.js';
+import { CartPage } from '../../../src/pages/storefront/cart-page.js';
+import { ProductPage } from '../../../src/pages/storefront/product-page.js';
+
+test(
+  'preserva preço, quantidade e cálculo do produto no carrinho @smoke',
+  {
+    tag: ['@web'],
+    annotation: [
+      { type: 'risk', description: 'RISK-002' },
+      { type: 'risk', description: 'RISK-006' },
+      { type: 'risk', description: 'RISK-007' }
+    ]
+  },
+  async ({ page }) => {
+    const product = new ProductPage(page);
+    const cart = new CartPage(page);
+
+    await product.visit(baselineProduct.path);
+    await expect(product.heading).toHaveText(baselineProduct.name);
+    await expect(product.price(baselineProduct.formattedUnitPrice)).toBeVisible();
+
+    await product.selectVariant(baselineProduct.color);
+    await expect(product.variant(baselineProduct.color).locator('..')).toHaveClass(/selected/);
+    await product.setQuantity(2);
+    await product.addToCart.click();
+
+    await expect(cart.drawer).toBeVisible();
+    const drawerItem = cart.drawer.getByRole('listitem').filter({ hasText: baselineProduct.name });
+    await expect(drawerItem).toContainText('2');
+    await expect(drawerItem).toContainText(`Color: ${baselineProduct.color}`);
+    await expect(drawerItem).toContainText('$70.00');
+    await expect(cart.drawer.getByText('Subtotal:', { exact: true }).locator('..')).toContainText('$70.00');
+
+    await cart.openFullCart();
+    await expect(page).toHaveURL(/\/cart$/);
+    const main = page.getByRole('main');
+    await expect(main.getByRole('link', { name: baselineProduct.name })).toBeVisible();
+    await expect(main).toContainText(`SKU ${baselineProduct.sku}`);
+    await expect(main.getByText('2', { exact: true })).toBeVisible();
+    await expect(main.getByText('Sub total', { exact: true }).locator('..')).toContainText('$70.00');
+    await expect(main.getByText('$70.00', { exact: true }).last()).toBeVisible();
+  }
+);
