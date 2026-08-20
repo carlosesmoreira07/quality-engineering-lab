@@ -55,6 +55,12 @@ Evidência de negócio é anexada ao teste somente nos checkpoints que comprovam
 
 Não são capturados screenshots de cada interação: ações como login, preenchimento e navegação intermediária gerariam ruído sem aumentar a confiança e ampliariam o custo de manutenção. Após uma execução, use `npm run report` para a análise de Engenharia e `npm run report:summary` para gerar o Quality Summary executivo em PDF.
 
+## Integração contínua
+
+Pull Requests para `main` executam o check **Quality Gate** no GitHub Actions. O fluxo valida TypeScript, inicia o SUT reproduzível com Docker Compose, exige que os quatro testes Web/API passem e confirma a geração das evidências. Qualquer gate obrigatório com falha reprova o check.
+
+A execução publica por 14 dias um artifact com o HTML Reporter, resultados e attachments do Playwright e o Quality Summary em PDF. O repositório deve possuir os GitHub Actions Secrets `E2E_ADMIN_EMAIL` e `E2E_ADMIN_PASSWORD`; eles criam um administrador efêmero no SUT da execução e nunca devem ser gravados em arquivos ou logs.
+
 ## Decisões de design
 
 Playwright atende Web e API com `APIRequestContext` nativo. Page Objects existem somente para interações reutilizadas da Storefront; não há fixtures, clientes genéricos, classes base ou ferramentas externas de relatório nesta etapa.

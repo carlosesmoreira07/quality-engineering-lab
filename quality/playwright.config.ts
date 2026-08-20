@@ -7,6 +7,7 @@ export default defineConfig({
   testDir: './tests',
   forbidOnly: true,
   retries: 0,
+  workers: process.env.CI ? 1 : undefined,
   reporter: [
     ['html', { open: 'never' }],
     ['json', { outputFile: 'test-results/results.json' }]

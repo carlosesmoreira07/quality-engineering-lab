@@ -1,0 +1,98 @@
+name: Quality Gate
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: quality-gate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality-gate:
+    name: Quality Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CI: true
+      E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+      E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: quality/package-lock.json
+
+      - name: Install dependencies
+        working-directory: quality
+        run: npm ci
+
+      - name: Gate 1 — Build and type safety
+        working-directory: quality
+        run: npm run typecheck
+
+      - name: Validate required secrets
+        shell: bash
+        run: |
+          if [[ -z "$E2E_ADMIN_EMAIL" || -z "$E2E_ADMIN_PASSWORD" ]]; then
+            echo "::error::Configure the repository secrets E2E_ADMIN_EMAIL and E2E_ADMIN_PASSWORD."
+            exit 1
+          fi
+
+      - name: Install Chromium
+        working-directory: quality
+        run: npx playwright install --with-deps chromium
+
+      - name: Gate 2 — Start healthy SUT
+        run: docker compose -f sut/docker-compose.yml up -d --wait --wait-timeout 300
+
+      - name: Create ephemeral CI administrator
+        shell: bash
+        run: >-
+          docker compose -f sut/docker-compose.yml exec -T
+          -e E2E_ADMIN_EMAIL -e E2E_ADMIN_PASSWORD evershop
+          sh -c 'npm run user:create -- --email "$E2E_ADMIN_EMAIL" --password "$E2E_ADMIN_PASSWORD" --name "QEL CI Administrator"'
+
+      - name: Gate 3 — Functional and API automation
+        working-directory: quality
+        run: npm test
+
+      - name: Generate Quality Summary
+        if: ${{ !cancelled() && hashFiles('quality/test-results/results.json') != '' }}
+        working-directory: quality
+        run: npm run report:summary
+
+      - name: Gate 4 — Verify evidence outputs
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          test -f quality/test-results/results.json
+          test -f quality/playwright-report/index.html
+          test -f output/pdf/qel-4-test-evidence.pdf
+
+      - name: Publish test evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: quality-evidence-${{ github.run_number }}
+          path: |
+            quality/playwright-report/
+            quality/test-results/
+            output/pdf/qel-4-test-evidence.pdf
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Cleanup SUT
+        if: ${{ always() }}
+        run: docker compose -f sut/docker-compose.yml down --volumes --remove-orphans
