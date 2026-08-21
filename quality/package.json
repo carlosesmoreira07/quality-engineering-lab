@@ -19,6 +19,10 @@
     "report:summary": "node scripts/generate-quality-summary.mjs",
     "performance:smoke": "node performance/run.mjs smoke",
     "performance:load": "node performance/run.mjs load",
+    "experiment:functional": "node ../experiments/run.mjs EXP-001",
+    "experiment:performance": "node ../experiments/run.mjs EXP-002",
+    "experiment:security": "node ../experiments/run.mjs EXP-003",
+    "experiment:all": "node ../experiments/run.mjs all",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
