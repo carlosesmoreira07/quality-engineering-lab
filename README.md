@@ -6,6 +6,10 @@ O objetivo não é ser apenas um repositório de testes automatizados, mas demon
 
 O projeto está em desenvolvimento e encontra-se atualmente na **Sprint 1 - MVP Quality Engineering Lab**, dedicada ao estabelecimento de sua fundação.
 
+## Portfolio Showcase
+
+Conheça a narrativa visual do laboratório em [Quality Engineering Lab — Moreira Tech](https://carlosesmoreira07.github.io/quality-engineering-lab/), conectando risco, engenharia, evidência real e decisão de release.
+
 ## Sistema Sob Teste
 
 O laboratório utiliza o EverShop como uma aplicação realista para a evolução das práticas de Quality Engineering. Consulte as [instruções do Sistema Sob Teste](sut/README.md) e a [decisão sobre a estratégia de baseline](docs/adr/0001-sut-baseline-strategy.md).

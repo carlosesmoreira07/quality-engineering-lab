@@ -7,3 +7,4 @@ quality/.env
 output/pdf/qel-4-test-evidence.pdf
 quality/performance-*-summary.json
 experiments/results/
+portfolio/dist/
