@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { expect, test } from '@playwright/test';
+import { attachHighlightedEvidence } from '../../../src/evidence/highlighted-screenshot.js';
 
 interface ResourceResponse {
   data: {
@@ -219,9 +220,11 @@ test(
     const adminLoginForm = page.getByRole('button', { name: 'Sign In' }).locator('xpath=ancestor::form');
     await expect(adminLoginForm).toBeVisible();
 
-    await testInfo.attach('evidencia-negocio-bloqueio-admin-anonimo', {
-      body: await adminLoginForm.screenshot(),
-      contentType: 'image/png'
+    await attachHighlightedEvidence(page, testInfo, {
+      name: 'evidencia-negocio-bloqueio-admin-anonimo',
+      checkpoints: [
+        { locator: adminLoginForm, label: 'Acesso redirecionado ao login' }
+      ]
     });
     await testInfo.attach('evidencia-api-bloqueio-admin-anonimo', {
       body: Buffer.from(

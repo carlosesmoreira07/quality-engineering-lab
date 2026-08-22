@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { attachHighlightedEvidence } from '../../../src/evidence/highlighted-screenshot.js';
 
 test(
   'rejeita autenticação com credenciais inválidas @smoke',
@@ -23,9 +24,11 @@ test(
     await expect(rejectionMessage).toBeVisible();
     await expect(page).toHaveURL(/\/account\/login$/);
 
-    await testInfo.attach('evidencia-negocio-rejeicao-autenticacao', {
-      body: await rejectionMessage.locator('..').screenshot(),
-      contentType: 'image/png'
+    await attachHighlightedEvidence(page, testInfo, {
+      name: 'evidencia-negocio-rejeicao-autenticacao',
+      checkpoints: [
+        { locator: rejectionMessage, label: 'Bloqueio confirmado' }
+      ]
     });
   }
 );
