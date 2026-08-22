@@ -18,6 +18,7 @@
     "test:debug": "playwright test --debug",
     "report": "playwright show-report",
     "report:summary": "node scripts/generate-quality-summary.mjs",
+    "evidence:failure-demo": "playwright test --config=playwright.failure-evidence.config.ts",
     "performance:smoke": "node performance/run.mjs smoke",
     "performance:post-merge-smoke": "node performance/run.mjs post-merge-smoke",
     "performance:load": "node performance/run.mjs load",
