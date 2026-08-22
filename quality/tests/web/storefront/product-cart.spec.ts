@@ -7,7 +7,7 @@ import { attachHighlightedEvidence } from '../../../src/evidence/highlighted-scr
 test(
   'preserva preço, quantidade e cálculo do produto no carrinho @smoke',
   {
-    tag: ['@web', '@post-merge-smoke'],
+    tag: ['@web'],
     annotation: [
       { type: 'risk', description: 'RISK-002' },
       { type: 'risk', description: 'RISK-006' },

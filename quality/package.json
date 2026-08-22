@@ -19,6 +19,7 @@
     "report": "playwright show-report",
     "report:summary": "node scripts/generate-quality-summary.mjs",
     "performance:smoke": "node performance/run.mjs smoke",
+    "performance:post-merge-smoke": "node performance/run.mjs post-merge-smoke",
     "performance:load": "node performance/run.mjs load",
     "experiment:functional": "node ../experiments/run.mjs EXP-001",
     "experiment:performance": "node ../experiments/run.mjs EXP-002",

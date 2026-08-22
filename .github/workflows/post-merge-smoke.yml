@@ -51,7 +51,7 @@ jobs:
 
       - name: Run performance smoke
         working-directory: quality
-        run: npm run performance:smoke
+        run: npm run performance:post-merge-smoke
 
       - name: Verify smoke evidence
         if: ${{ success() }}
@@ -59,7 +59,7 @@ jobs:
         run: |
           test -f quality/test-results/results.json
           test -f quality/playwright-report/index.html
-          compgen -G 'quality/performance-smoke-*-summary.json' > /dev/null
+          compgen -G 'quality/performance-post-merge-smoke-*-summary.json' > /dev/null
 
       - name: Capture SUT diagnostics on failure
         if: ${{ failure() }}
@@ -73,7 +73,7 @@ jobs:
           path: |
             quality/playwright-report/
             quality/test-results/
-            quality/performance-smoke-*-summary.json
+            quality/performance-post-merge-smoke-*-summary.json
             quality/sut-post-merge.log
           if-no-files-found: warn
           retention-days: 14
