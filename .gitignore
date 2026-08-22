@@ -2,6 +2,8 @@ sut/.env
 quality/node_modules/
 quality/playwright-report/
 quality/test-results/
+quality/failure-evidence-report/
+quality/failure-evidence-results/
 quality/.auth/
 quality/.env
 output/pdf/qel-4-test-evidence.pdf

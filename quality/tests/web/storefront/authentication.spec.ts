@@ -26,8 +26,9 @@ test(
 
     await attachHighlightedEvidence(page, testInfo, {
       name: 'evidencia-negocio-rejeicao-autenticacao',
+      focusOn: rejectionMessage,
       checkpoints: [
-        { locator: rejectionMessage, label: 'Bloqueio confirmado' }
+        { locator: rejectionMessage, label: 'Bloqueio confirmado', hideLabel: true }
       ]
     });
   }
