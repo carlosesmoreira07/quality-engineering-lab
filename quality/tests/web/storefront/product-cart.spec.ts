@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { baselineProduct } from '../../../src/data/baseline.js';
 import { CartPage } from '../../../src/pages/storefront/cart-page.js';
 import { ProductPage } from '../../../src/pages/storefront/product-page.js';
+import { attachHighlightedEvidence } from '../../../src/evidence/highlighted-screenshot.js';
 
 test(
   'preserva preço, quantidade e cálculo do produto no carrinho @smoke',
@@ -53,9 +54,13 @@ test(
     await expect(main.getByText('Sub total', { exact: true }).locator('..')).toContainText('$70.00');
     await expect(main.getByText('$70.00', { exact: true }).last()).toBeVisible();
 
-    await testInfo.attach('evidencia-negocio-integridade-carrinho', {
-      body: await main.screenshot(),
-      contentType: 'image/png'
+    await attachHighlightedEvidence(page, testInfo, {
+      name: 'evidencia-negocio-integridade-carrinho',
+      checkpoints: [
+        { locator: main.getByRole('link', { name: baselineProduct.name }), label: 'Produto e variante' },
+        { locator: main.getByText('2', { exact: true }), label: 'Quantidade' },
+        { locator: main.getByText('Sub total', { exact: true }).locator('..'), label: 'Subtotal validado' }
+      ]
     });
   }
 );

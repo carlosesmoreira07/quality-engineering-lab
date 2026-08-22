@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { copyFile, rm } from 'node:fs/promises';
+import { readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,6 +21,7 @@ const cartIdPattern = /^[0-9a-f]{32}$/i;
 const itemIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 let fixture;
 let exitCode = 1;
+const startedAt = Date.now();
 
 const wait = (milliseconds) =>
   new Promise((resolve) => setTimeout(resolve, milliseconds));
@@ -76,8 +77,16 @@ try {
     }
   );
   if (execution.error) throw execution.error;
-  await copyFile(temporarySummary, path.join(qualityDir, summaryFile));
   exitCode = execution.status ?? 1;
+  const summary = JSON.parse(await readFile(temporarySummary, 'utf8'));
+  summary.qel = {
+    profile,
+    passed: exitCode === 0,
+    exitCode,
+    durationMs: Date.now() - startedAt,
+    generatedAt: new Date().toISOString()
+  };
+  await writeFile(path.join(qualityDir, summaryFile), `${JSON.stringify(summary, null, 2)}\n`);
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);
   exitCode = 1;

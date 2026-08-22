@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { expect, test } from '@playwright/test';
 import { CartPage } from '../../../src/pages/storefront/cart-page.js';
 import { ProductPage } from '../../../src/pages/storefront/product-page.js';
+import { attachHighlightedEvidence } from '../../../src/evidence/highlighted-screenshot.js';
 
 interface ProductResponse {
   data: {
@@ -132,9 +133,15 @@ test(
         await expect(drawerItem).toContainText('$85.00');
         await expect(cart.drawer.getByText('Subtotal:', { exact: true }).locator('..')).toContainText('$85.00');
 
-        await testInfo.attach('evidencia-negocio-admin-storefront-carrinho', {
-          body: await drawerItem.screenshot(),
-          contentType: 'image/png'
+        await attachHighlightedEvidence(page, testInfo, {
+          name: 'evidencia-negocio-admin-storefront-carrinho',
+          checkpoints: [
+            { locator: drawerItem, label: 'Preço e quantidade propagados' },
+            {
+              locator: cart.drawer.getByText('Subtotal:', { exact: true }).locator('..'),
+              label: 'Subtotal atualizado'
+            }
+          ]
         });
       });
     } finally {
