@@ -57,6 +57,8 @@ Evidência de negócio é anexada ao teste somente nos checkpoints que comprovam
 
 Não são capturados screenshots de cada interação: ações como login, preenchimento e navegação intermediária gerariam ruído sem aumentar a confiança e ampliariam o custo de manutenção. Após uma execução, use `npm run report` para a análise de Engenharia e `npm run report:summary` para gerar o Quality Summary executivo em PDF.
 
+O comando `npm run evidence:failure-demo` executa uma página local e efêmera com divergência proposital, confirma que o controle detecta o valor incorreto e publica uma cópia anotada com retângulo vermelho em um HTML Reporter separado. A demonstração não acessa nem altera o SUT e não participa da decisão verde da suíte principal.
+
 ## Integração contínua
 
 Pull Requests para `main` executam o check **Quality Gate** no GitHub Actions. O fluxo valida TypeScript, CodeQL, mudanças de dependências, inicia o SUT reproduzível com Docker Compose, exige que a suíte Web/API/segurança e o performance smoke passem e confirma a geração das evidências. Dependency Review bloqueia vulnerabilidades altas ou críticas introduzidas pelo PR; qualquer gate obrigatório com falha reprova o check.
