@@ -48,27 +48,29 @@ A prioridade considera impacto, probabilidade e relevância para o MVP. Não há
 
 ## 6. Matriz de riscos
 
-| ID | Jornada | Risco | Impacto | Probabilidade | Prioridade | Controle recomendado |
-|---|---|---|---|---|---|---|
-| RISK-001 | Catálogo | Produto ativo ou categoria relevante não aparece, impedindo sua descoberta | Médio | Médio | Médio | Funcional Web; API / Integração; Exploratório / Manual |
-| RISK-002 | Página de produto | Preço ou acréscimo de variante exibido incorretamente e propagado à compra | Crítico | Alto | Crítico | Funcional Web; API / Integração |
-| RISK-003 | Página de produto | Variante indisponível pode ser selecionada ou adicionada ao carrinho | Alto | Médio | Alto | Funcional Web; API / Integração |
-| RISK-004 | Autenticação | Credenciais ou sessão são aceitas, mantidas ou encerradas de forma indevida | Crítico | Médio | Crítico | Funcional Web; API / Integração; Segurança |
-| RISK-005 | Consulta de pedidos | Cliente acessa pedido ou dados pessoais de outro cliente | Crítico | Médio | Crítico | API / Integração; Segurança; Funcional Web |
-| RISK-006 | Carrinho | Item, variante ou quantidade diverge da escolha do cliente | Crítico | Alto | Crítico | Funcional Web; API / Integração |
-| RISK-007 | Carrinho | Subtotal ou total diverge dos itens e preços válidos | Crítico | Alto | Crítico | API / Integração; Funcional Web |
-| RISK-008 | Checkout | Endereço, entrega ou pagamento inválido é aceito, ou altera o total sem consistência | Crítico | Médio | Alto | Funcional Web; API / Integração; Exploratório / Manual |
-| RISK-009 | Criação de pedido | Reenvio, repetição de clique ou retry cria pedidos duplicados | Crítico | Médio | Crítico | API / Integração; Funcional Web; Performance |
-| RISK-010 | Criação de pedido | Pedido é persistido sem itens, valores, cliente ou endereços íntegros | Crítico | Médio | Crítico | API / Integração; Funcional Web |
-| RISK-011 | Consulta de pedidos | Pedido criado não aparece ou apresenta estado e valores divergentes | Alto | Médio | Alto | Funcional Web; API / Integração |
-| RISK-012 | Administração de produtos | Alteração de produto fica incompleta ou gera oferta inválida na vitrine | Alto | Médio | Alto | Funcional Web; API / Integração; Exploratório / Manual |
-| RISK-013 | Administração de preços | Preço administrativo incorreto não se propaga ou altera compras de modo inconsistente | Crítico | Alto | Crítico | API / Integração; Funcional Web |
-| RISK-014 | Administração de estoque | Concorrência permite venda acima da quantidade disponível | Crítico | Médio | Crítico | API / Integração; Performance |
-| RISK-015 | Administração de estoque | Criação ou cancelamento do pedido não movimenta o estoque corretamente | Crítico | Médio | Alto | API / Integração; Funcional Web |
-| RISK-016 | Administração de pedidos | Usuário não autorizado consulta ou altera pedidos administrativos | Crítico | Baixo | Alto | Segurança; API / Integração; Funcional Web |
-| RISK-017 | Administração de pedidos | Transição inválida deixa pedido, pagamento ou expedição em estado incoerente | Alto | Médio | Alto | API / Integração; Funcional Web; Exploratório / Manual |
-| RISK-018 | Catálogo e página de produto | Lentidão degrada descoberta e visualização, mas a compra permanece disponível | Médio | Alto | Médio | Performance |
-| RISK-019 | Carrinho, checkout e pedido | Degradação ou erro sob uso simultâneo impede compra ou deixa resultado transacional incerto | Crítico | Médio | Crítico | Performance; API / Integração |
+Esta matriz é a fonte única para nome de negócio, identificador técnico, categoria e severidade. Relatórios e documentação apresentam primeiro o **Nome de negócio**; o `RISK-XXX` permanece como referência estável para annotations, cobertura e diagnóstico técnico.
+
+| ID | Nome de negócio | Categoria | Jornada | Risco | Impacto | Probabilidade | Prioridade | Controle recomendado |
+|---|---|---|---|---|---|---|---|---|
+| RISK-001 | Descoberta de produtos ativos | Catálogo e oferta | Catálogo | Produto ativo ou categoria relevante não aparece, impedindo sua descoberta | Médio | Médio | Médio | Funcional Web; API / Integração; Exploratório / Manual |
+| RISK-002 | Integridade do preço apresentado na compra | Catálogo e oferta | Página de produto | Preço ou acréscimo de variante exibido incorretamente e propagado à compra | Crítico | Alto | Crítico | Funcional Web; API / Integração |
+| RISK-003 | Disponibilidade real de variantes | Catálogo e oferta | Página de produto | Variante indisponível pode ser selecionada ou adicionada ao carrinho | Alto | Médio | Alto | Funcional Web; API / Integração |
+| RISK-004 | Proteção da conta e da sessão do cliente | Identidade e acesso | Autenticação | Credenciais ou sessão são aceitas, mantidas ou encerradas de forma indevida | Crítico | Médio | Crítico | Funcional Web; API / Integração; Segurança |
+| RISK-005 | Privacidade de pedidos entre clientes | Identidade e acesso | Consulta de pedidos | Cliente acessa pedido ou dados pessoais de outro cliente | Crítico | Médio | Crítico | API / Integração; Segurança; Funcional Web |
+| RISK-006 | Integridade dos itens no carrinho | Compra e pedidos | Carrinho | Item, variante ou quantidade diverge da escolha do cliente | Crítico | Alto | Crítico | Funcional Web; API / Integração |
+| RISK-007 | Exatidão dos totais do carrinho | Compra e pedidos | Carrinho | Subtotal ou total diverge dos itens e preços válidos | Crítico | Alto | Crítico | API / Integração; Funcional Web |
+| RISK-008 | Validação dos dados e valores do checkout | Compra e pedidos | Checkout | Endereço, entrega ou pagamento inválido é aceito, ou altera o total sem consistência | Crítico | Médio | Alto | Funcional Web; API / Integração; Exploratório / Manual |
+| RISK-009 | Prevenção de pedidos duplicados | Compra e pedidos | Criação de pedido | Reenvio, repetição de clique ou retry cria pedidos duplicados | Crítico | Médio | Crítico | API / Integração; Funcional Web; Performance |
+| RISK-010 | Integridade dos dados do pedido | Compra e pedidos | Criação de pedido | Pedido é persistido sem itens, valores, cliente ou endereços íntegros | Crítico | Médio | Crítico | API / Integração; Funcional Web |
+| RISK-011 | Confiabilidade do histórico de pedidos | Compra e pedidos | Consulta de pedidos | Pedido criado não aparece ou apresenta estado e valores divergentes | Alto | Médio | Alto | Funcional Web; API / Integração |
+| RISK-012 | Consistência da oferta entre Administração e vitrine | Catálogo e oferta | Administração de produtos | Alteração de produto fica incompleta ou gera oferta inválida na vitrine | Alto | Médio | Alto | Funcional Web; API / Integração; Exploratório / Manual |
+| RISK-013 | Integridade de preço entre Administração e compra | Catálogo e oferta | Administração de preços | Preço administrativo incorreto não se propaga ou altera compras de modo inconsistente | Crítico | Alto | Crítico | API / Integração; Funcional Web |
+| RISK-014 | Proteção contra venda acima do estoque | Estoque | Administração de estoque | Concorrência permite venda acima da quantidade disponível | Crítico | Médio | Crítico | API / Integração; Performance |
+| RISK-015 | Consistência do estoque após pedidos | Estoque | Administração de estoque | Criação ou cancelamento do pedido não movimenta o estoque corretamente | Crítico | Médio | Alto | API / Integração; Funcional Web |
+| RISK-016 | Proteção do acesso administrativo a pedidos | Identidade e acesso | Administração de pedidos | Usuário não autorizado consulta ou altera pedidos administrativos | Crítico | Baixo | Alto | Segurança; API / Integração; Funcional Web |
+| RISK-017 | Coerência do ciclo operacional do pedido | Compra e pedidos | Administração de pedidos | Transição inválida deixa pedido, pagamento ou expedição em estado incoerente | Alto | Médio | Alto | API / Integração; Funcional Web; Exploratório / Manual |
+| RISK-018 | Desempenho da descoberta de produtos | Performance | Catálogo e página de produto | Lentidão degrada descoberta e visualização, mas a compra permanece disponível | Médio | Alto | Médio | Performance |
+| RISK-019 | Disponibilidade e previsibilidade da compra | Performance | Carrinho, checkout e pedido | Degradação ou erro sob uso simultâneo impede compra ou deixa resultado transacional incerto | Crítico | Médio | Crítico | Performance; API / Integração |
 
 ## 7. Estratégia de validação
 
@@ -88,18 +90,18 @@ Um risco priorizado não implica automaticamente um teste E2E Web. A camada de v
 
 O MVP prioriza doze riscos:
 
-- **RISK-002:** correção do preço apresentado e utilizado na compra.
-- **RISK-004:** autenticação e ciclo de sessão do cliente.
-- **RISK-005:** isolamento dos pedidos e dados entre clientes.
-- **RISK-006:** integridade de item, variante e quantidade no carrinho.
-- **RISK-007:** integridade dos cálculos financeiros do carrinho.
-- **RISK-009:** prevenção de pedidos duplicados.
-- **RISK-010:** integridade da criação e persistência do pedido.
-- **RISK-013:** persistência do preço administrativo e propagação consistente para vitrine, carrinho e compra.
-- **RISK-014:** prevenção de venda acima do estoque sob concorrência.
-- **RISK-015:** consistência do estoque após criação e cancelamento de pedidos, refletida na próxima compra.
-- **RISK-016:** bloqueio do acesso não autorizado a pedidos e dados administrativos privilegiados.
-- **RISK-019:** disponibilidade e resultado determinístico da jornada de compra sob degradação.
+- **Integridade do preço apresentado na compra** — `RISK-002`.
+- **Proteção da conta e da sessão do cliente** — `RISK-004`.
+- **Privacidade de pedidos entre clientes** — `RISK-005`.
+- **Integridade dos itens no carrinho** — `RISK-006`.
+- **Exatidão dos totais do carrinho** — `RISK-007`.
+- **Prevenção de pedidos duplicados** — `RISK-009`.
+- **Integridade dos dados do pedido** — `RISK-010`.
+- **Integridade de preço entre Administração e compra** — `RISK-013`.
+- **Proteção contra venda acima do estoque** — `RISK-014`.
+- **Consistência do estoque após pedidos** — `RISK-015`.
+- **Proteção do acesso administrativo a pedidos** — `RISK-016`.
+- **Disponibilidade e previsibilidade da compra** — `RISK-019`.
 
 Esse recorte cobre três dimensões complementares:
 
@@ -111,7 +113,7 @@ Os riscos administrativos selecionados entram no MVP porque mudanças no backoff
 
 ## 9. Riscos conscientemente não priorizados
 
-No MVP, não terão cobertura profunda a descoberta completa do catálogo, todas as combinações de checkout, a criação e edição administrativa completa de produtos, combinações avançadas de atributos e mídia, nem a cobertura exaustiva das transições de estado dos pedidos. **RISK-012** e **RISK-017** continuam rastreados, mas fora do recorte priorizado.
+No MVP, não terão cobertura profunda a descoberta completa do catálogo, todas as combinações de checkout, a criação e edição administrativa completa de produtos, combinações avançadas de atributos e mídia, nem a cobertura exaustiva das transições de estado dos pedidos. **Consistência da oferta entre Administração e vitrine** (`RISK-012`) e **Coerência do ciclo operacional do pedido** (`RISK-017`) continuam rastreados, mas fora do recorte priorizado.
 
 Também ficam fora as demais funcionalidades administrativas sem impacto direto nos riscos priorizados e funcionalidades periféricas como promoções, CMS, tributação avançada e integrações externas não habilitadas na baseline atual. A exclusão evita testes artificiais sobre comportamentos que o laboratório ainda não utiliza.
 

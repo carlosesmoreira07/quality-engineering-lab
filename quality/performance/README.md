@@ -2,9 +2,9 @@
 
 ## Objetivo
 
-Esta camada usa k6 OSS `2.1.0` para avaliar uma baseline controlada do EverShop 2.2.1. Os cenários ligam workload, comportamento funcional e thresholds ao `RISK-019`; `RISK-018` fornece contexto secundário para a leitura da página de produto.
+Esta camada usa k6 OSS `2.1.0` para avaliar uma referência controlada do EverShop 2.2.1. Os cenários ligam workload, comportamento funcional e thresholds à **disponibilidade e previsibilidade da compra** (`RISK-019`); o **desempenho da descoberta de produtos** (`RISK-018`) fornece contexto secundário para a leitura da página de produto.
 
-`RISK-014` permanece sem cobertura determinística: a baseline atual não possui frete e pagamento configurados para concluir pedidos e observar movimentação concorrente de estoque com restauração confiável. O teste não força esse experimento nem declara proteção contra overselling.
+**Proteção contra venda acima do estoque** (`RISK-014`) permanece sem cobertura determinística: a versão estável atual não possui frete e pagamento configurados para concluir pedidos e observar movimentação concorrente de estoque com restauração confiável. O teste não força esse experimento nem declara proteção contra overselling.
 
 ## Cenários
 

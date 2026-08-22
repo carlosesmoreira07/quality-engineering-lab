@@ -10,11 +10,11 @@ Execuções manuais da skill `qe-impact-analysis` em 20/08/2026. As duas anális
 
 | Risco | Classificação | Controle encontrado |
 |---|---|---|
-| RISK-002 | COBERTO | `product-cart.spec.ts` verifica preço no carrinho; `admin-price.spec.ts` verifica propagação Admin → Storefront → carrinho. |
-| RISK-004 | PARCIALMENTE COBERTO | `authentication.spec.ts` detecta rejeição de credencial inválida, mas não exercita todo o ciclo de sessão descrito pelo risco. |
-| RISK-006 / RISK-007 | COBERTO | Controles Web e API verificam produto, quantidade, preço, subtotal e total. |
-| RISK-010 | PARCIALMENTE COBERTO | `order-integrity.spec.ts` rejeita pedido incompleto; criação e persistência de pedido completo continuam limitadas pela baseline. |
-| RISK-013 | COBERTO | O cenário cross-domain altera o preço no Admin e confirma sua propagação e cálculo final. |
+| Integridade do preço apresentado na compra (`RISK-002`) | COBERTO | `product-cart.spec.ts` verifica preço no carrinho; `admin-price.spec.ts` verifica propagação Admin → Storefront → carrinho. |
+| Proteção da conta e da sessão do cliente (`RISK-004`) | PARCIALMENTE COBERTO | `authentication.spec.ts` detecta rejeição de credencial inválida, mas não exercita todo o ciclo de sessão descrito pelo risco. |
+| Integridade dos itens e exatidão dos totais do carrinho (`RISK-006` / `RISK-007`) | COBERTO | Controles Web e API verificam produto, quantidade, preço, subtotal e total. |
+| Integridade dos dados do pedido (`RISK-010`) | PARCIALMENTE COBERTO | `order-integrity.spec.ts` rejeita pedido incompleto; criação e persistência de pedido completo continuam limitadas pela versão estável atual. |
+| Integridade de preço entre Administração e compra (`RISK-013`) | COBERTO | O cenário cross-domain altera o preço no Admin e confirma sua propagação e cálculo final. |
 
 **Resultado da validação da skill:** encontrou as anotações de risco, abriu os cenários e diferenciou cobertura completa de caminhos parciais. O caso confirma que a skill não transforma o status concluído do Jira em cobertura total.
 
@@ -28,9 +28,9 @@ Execuções manuais da skill `qe-impact-analysis` em 20/08/2026. As duas anális
 
 | Risco | Classificação | Controle encontrado ou gap |
 |---|---|---|
-| RISK-019 | COBERTO | `smoke.js` e `load.js` verificam latência, erro, checks e determinismo da rejeição transacional sob workload controlado. |
-| RISK-018 | PARCIALMENTE COBERTO | O smoke mede a página de um produto, mas não cobre descoberta ampla de catálogo nem browser performance. |
-| RISK-014 | NÃO COBERTO | O load não conclui pedido, não disputa estoque e não observa overselling; a limitação está explícita no ADR 0004 e no README de performance. |
+| Disponibilidade e previsibilidade da compra (`RISK-019`) | COBERTO | `smoke.js` e `load.js` verificam latência, erro, checks e determinismo da rejeição transacional sob workload controlado. |
+| Desempenho da descoberta de produtos (`RISK-018`) | PARCIALMENTE COBERTO | O smoke mede a página de um produto, mas não cobre descoberta ampla de catálogo nem browser performance. |
+| Proteção contra venda acima do estoque (`RISK-014`) | NÃO COBERTO | O load não conclui pedido, não disputa estoque e não observa overselling; a limitação está explícita no ADR 0004 e no README de performance. |
 
 **Resultado da validação da skill:** evitou inferir cobertura de estoque a partir da palavra “concorrência” e identificou que o workload atual usa um carrinho incompleto sem mutação de estoque.
 

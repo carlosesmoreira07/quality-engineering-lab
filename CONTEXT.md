@@ -6,7 +6,7 @@
 
 **Demanda**: mudança ou objetivo descrito em um card Jira e submetido à análise de impacto.
 
-**Risco**: modo de falha de produto registrado em `docs/quality-strategy.md`, identificado por `RISK-*` e classificado por impacto, probabilidade e prioridade.
+**Risco**: modo de falha de produto registrado em `docs/quality-strategy.md`, com nome orientado ao negócio e referência técnica estável `RISK-*`, classificado por impacto, probabilidade e prioridade. Na comunicação, o nome vem primeiro e o ID aparece como detalhe de rastreabilidade.
 
 **Controle**: verificação executável capaz de detectar uma falha relevante, como uma assertion Playwright, um check/threshold k6 ou um gate objetivo de CI.
 
