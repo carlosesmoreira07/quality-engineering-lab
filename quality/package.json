@@ -12,6 +12,7 @@
     "test:api": "playwright test tests/api",
     "test:security": "playwright test --grep @security",
     "test:smoke": "playwright test --grep @smoke",
+    "test:post-merge-smoke": "playwright test --grep @post-merge-smoke",
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",

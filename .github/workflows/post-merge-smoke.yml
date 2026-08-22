@@ -1,0 +1,83 @@
+name: Post-merge Smoke
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: post-merge-smoke-main
+  cancel-in-progress: true
+
+jobs:
+  post-merge-smoke:
+    name: Post-merge Smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout merged commit
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: quality/package-lock.json
+
+      - name: Install quality dependencies
+        working-directory: quality
+        run: npm ci
+
+      - name: Install Chromium
+        working-directory: quality
+        run: npx playwright install --with-deps chromium
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1.2.1
+        with:
+          k6-version: 2.1.0
+
+      - name: Start healthy SUT
+        run: docker compose -f sut/docker-compose.yml up -d --wait --wait-timeout 300
+
+      - name: Run critical post-merge smoke
+        working-directory: quality
+        run: npm run test:post-merge-smoke
+
+      - name: Run performance smoke
+        working-directory: quality
+        run: npm run performance:smoke
+
+      - name: Verify smoke evidence
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          test -f quality/test-results/results.json
+          test -f quality/playwright-report/index.html
+          compgen -G 'quality/performance-smoke-*-summary.json' > /dev/null
+
+      - name: Capture SUT diagnostics on failure
+        if: ${{ failure() }}
+        run: docker compose -f sut/docker-compose.yml logs --no-color > quality/sut-post-merge.log
+
+      - name: Publish smoke evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: post-merge-smoke-${{ github.run_number }}
+          path: |
+            quality/playwright-report/
+            quality/test-results/
+            quality/performance-smoke-*-summary.json
+            quality/sut-post-merge.log
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Cleanup SUT
+        if: ${{ always() }}
+        run: docker compose -f sut/docker-compose.yml down --volumes --remove-orphans
