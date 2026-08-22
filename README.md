@@ -1,27 +1,30 @@
 # Quality Engineering Lab
 
-O **Quality Engineering Lab**, da Moreira Tech, é um laboratório prático criado para demonstrar como a qualidade pode ser incorporada ao ciclo de desenvolvimento de software, desde a análise da demanda até a decisão de release.
+O **Quality Engineering Lab**, da Moreira Tech, demonstra como transformar riscos de negócio em controles automatizados, evidências auditáveis e decisões objetivas ao longo do desenvolvimento de software.
 
-O objetivo não é ser apenas um repositório de testes automatizados, mas demonstrar a aplicação de **Quality Engineering** ao longo de todo o ciclo de desenvolvimento.
+Não é apenas um repositório de testes. É uma referência prática de **Quality Engineering**, da análise da mudança até a confirmação de que a versão estável continua saudável.
 
-O projeto está em desenvolvimento e encontra-se atualmente na **Sprint 1 - MVP Quality Engineering Lab**, dedicada ao estabelecimento de sua fundação.
+## Comece por aqui
 
-## Portfolio Showcase
+- **Conhecer o projeto em poucos minutos:** [Wiki oficial](https://github.com/carlosesmoreira07/quality-engineering-lab/wiki)
+- **Avaliar o resultado visual:** [Portfolio Showcase](https://carlosesmoreira07.github.io/quality-engineering-lab/)
+- **Ver decisões e evidências recentes:** [GitHub Actions](https://github.com/carlosesmoreira07/quality-engineering-lab/actions)
+- **Executar localmente:** [guia técnico na Wiki](https://github.com/carlosesmoreira07/quality-engineering-lab/wiki/Como-Executar)
 
-Conheça a narrativa visual do laboratório em [Quality Engineering Lab — Moreira Tech](https://carlosesmoreira07.github.io/quality-engineering-lab/), conectando risco, engenharia, evidência real e decisão de release.
+## O que o laboratório demonstra
 
-## Sistema Sob Teste
+| Capacidade | Valor entregue |
+|---|---|
+| Estratégia orientada a riscos | Prioriza perdas financeiras, integridade transacional, acesso e disponibilidade |
+| Automação Web e API | Protege jornadas e regras críticas com Playwright |
+| Segurança | Verifica isolamento, autorização e mudanças de dependências/código |
+| Performance | Mede disponibilidade e tempo de resposta com perfis proporcionais ao risco |
+| Quality Gates | Bloqueia mudanças quando controles obrigatórios falham |
+| Evidências | Produz HTML técnico, attachments e relatório executivo em PDF |
+| IA aplicada a QE | Apoia análise de impacto sem substituir revisão humana ou gates determinísticos |
 
-O laboratório utiliza o EverShop como uma aplicação realista para a evolução das práticas de Quality Engineering. Consulte as [instruções do Sistema Sob Teste](sut/README.md) e a [decisão sobre a estratégia de baseline](docs/adr/0001-sut-baseline-strategy.md).
+## Jornada de leitura
 
-## Automação de testes
+**Visão → Estratégia → Implementação → Controles → Evidências → Execução técnica**
 
-A fundação da automação orientada a riscos está documentada em [quality/README.md](quality/README.md).
-
-## Integração contínua
-
-Pull Requests para `main` são avaliados pelo check **Quality Gate**. A decisão arquitetural e os gates obrigatórios estão registrados em [ADR 0003](docs/adr/0003-ci-quality-gates.md).
-
-## Performance Engineering
-
-A estratégia enxuta com k6 OSS está documentada em [quality/performance/README.md](quality/performance/README.md) e na [ADR 0004](docs/adr/0004-performance-testing-strategy.md).
+A [Wiki](https://github.com/carlosesmoreira07/quality-engineering-lab/wiki) organiza essa jornada por valor e entendimento. As fontes técnicas continuam versionadas no repositório: [estratégia de qualidade](docs/quality-strategy.md), [automação](quality/README.md), [ambiente de referência](sut/README.md) e [Decisões de Arquitetura](docs/adr/).
