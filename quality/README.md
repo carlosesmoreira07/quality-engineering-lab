@@ -40,6 +40,7 @@ npm run test:web
 npm run test:api
 npm run test:security
 npm run test:smoke
+npm run test:post-merge-smoke
 npm run test:ui
 npm run test:headed
 npm run test:debug
@@ -60,7 +61,11 @@ Não são capturados screenshots de cada interação: ações como login, preenc
 
 Pull Requests para `main` executam o check **Quality Gate** no GitHub Actions. O fluxo valida TypeScript, CodeQL, mudanças de dependências, inicia o SUT reproduzível com Docker Compose, exige que a suíte Web/API/segurança e o performance smoke passem e confirma a geração das evidências. Dependency Review bloqueia vulnerabilidades altas ou críticas introduzidas pelo PR; qualquer gate obrigatório com falha reprova o check.
 
-A execução publica por 14 dias um artifact com o HTML Reporter, resultados e attachments do Playwright, Quality Summary em PDF e summary JSON do k6. O repositório deve possuir os GitHub Actions Secrets `E2E_ADMIN_EMAIL` e `E2E_ADMIN_PASSWORD`; eles criam um administrador efêmero no SUT da execução e nunca devem ser gravados em arquivos ou logs.
+Após um merge, todo `push` na `main` executa separadamente o **Post-merge Smoke** para confirmar que a baseline publicada continua saudável. Esse fluxo não decide o merge e não repete a regressão completa: valida o produto e carrinho na Storefront, a integridade e rejeição de pedido incompleto por API, o bloqueio administrativo anônimo e o perfil k6 smoke. A execução esperada é GREEN, usa somente Chromium, não ativa regressões controladas e normalmente termina em até 10 minutos.
+
+Para reproduzir localmente, inicie o SUT saudável conforme `sut/README.md` e, na pasta `quality`, execute `npm run test:post-merge-smoke` seguido de `npm run performance:smoke`. O recorte confirma sinais críticos da baseline, mas não substitui o Quality Gate completo do PR, testes de carga, scanners ou os experimentos controlados — estes últimos permanecem manuais e podem ficar RED durante a variante por desenho.
+
+O Quality Gate publica por 14 dias um artifact com o HTML Reporter, resultados e attachments do Playwright, Quality Summary em PDF e summary JSON do k6. O Post-merge Smoke mantém pelo mesmo período somente o HTML Reporter, resultados/attachments selecionados e o summary JSON do k6. Os GitHub Actions Secrets `E2E_ADMIN_EMAIL` e `E2E_ADMIN_PASSWORD` são usados apenas pelo Quality Gate para criar um administrador efêmero no SUT e nunca devem ser gravados em arquivos ou logs; o smoke pós-merge selecionado não depende de credenciais.
 
 Os cenários, workloads, thresholds e limitações de Performance Engineering estão documentados em [`performance/README.md`](performance/README.md). O load controlado é manual e não faz parte de todo Pull Request.
 

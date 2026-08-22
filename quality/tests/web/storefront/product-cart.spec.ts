@@ -6,7 +6,7 @@ import { ProductPage } from '../../../src/pages/storefront/product-page.js';
 test(
   'preserva preço, quantidade e cálculo do produto no carrinho @smoke',
   {
-    tag: ['@web'],
+    tag: ['@web', '@post-merge-smoke'],
     annotation: [
       { type: 'risk', description: 'RISK-002' },
       { type: 'risk', description: 'RISK-006' },

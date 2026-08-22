@@ -190,7 +190,7 @@ test(
 test(
   'bloqueia acesso administrativo anônimo em Web e API @security',
   {
-    tag: ['@web', '@api', '@security'],
+    tag: ['@web', '@api', '@security', '@post-merge-smoke'],
     annotation: [
       { type: 'risk', description: 'RISK-016' },
       { type: 'behavior', description: 'Bloqueio da fronteira administrativa para usuário anônimo' },
