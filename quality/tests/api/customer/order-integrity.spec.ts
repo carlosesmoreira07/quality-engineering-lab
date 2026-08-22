@@ -19,7 +19,7 @@ interface CartResponse {
 test(
   'mantém a integridade dos valores e rejeita pedido incompleto @smoke',
   {
-    tag: ['@api', '@post-merge-smoke'],
+    tag: ['@api'],
     annotation: [
       { type: 'risk', description: 'RISK-006' },
       { type: 'risk', description: 'RISK-007' },
