@@ -38,7 +38,7 @@ jobs:
 
       - name: Gate 1 — Dependency changes
         if: ${{ github.event_name == 'pull_request' }}
-        uses: actions/dependency-review-action@v4
+        uses: actions/dependency-review-action@v5
         with:
           fail-on-severity: high
 
@@ -114,7 +114,7 @@ jobs:
 
       - name: Publish test evidence
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: quality-evidence-${{ github.run_number }}
           path: |
