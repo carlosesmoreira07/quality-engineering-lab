@@ -2,28 +2,42 @@
 
 ## Objetivo
 
-Esta camada usa k6 OSS `2.1.0` para avaliar uma referência controlada do EverShop 2.2.1. Os cenários ligam workload, comportamento funcional e thresholds à **disponibilidade e previsibilidade da compra** (`RISK-019`); o **desempenho da descoberta de produtos** (`RISK-018`) fornece contexto secundário para a leitura da página de produto.
+Esta camada usa k6 OSS `2.1.0` para avaliar uma referência controlada do EverShop 2.2.1. Os cenários ligam workload, comportamento funcional e thresholds à **disponibilidade e previsibilidade da compra** (`RISK-019`); o **desempenho da descoberta de produtos** (`RISK-018`) e a **descoberta de produtos ativos** (`RISK-001`) fornecem contexto para a navegação do cliente e leitura do catálogo.
 
 **Proteção contra venda acima do estoque** (`RISK-014`) permanece sem cobertura determinística: a versão estável atual não possui frete e pagamento configurados para concluir pedidos e observar movimentação concorrente de estoque com restauração confiável. O teste não força esse experimento nem declara proteção contra overselling.
 
-## Cenários
+## Separação de perfis e cenários
 
-| Perfil | Workload | Pergunta respondida |
-|---|---|---|
-| Smoke | 2 iterações/s por 10 s; cada iteração lê o produto e valida a rejeição de um pedido sem identificador de carrinho | Existe regressão grosseira de latência, erro ou comportamento na entrada da jornada e na validação de pedido? |
-| Load | 3 usuários simultâneos por 20 s, com uma validação por usuário a cada segundo, contra um carrinho real incompleto e isolado | A validação transacional permanece rápida e determinística sob concorrência controlada? |
+A suíte separa claramente os objetivos de teste de performance em três categorias:
 
-O runner cria um único carrinho para o load, passa somente seu identificador ao k6 e remove o último item em `finally`, inclusive quando um threshold falha. Pelo contrato do EverShop 2.2.1, salvar um carrinho vazio remove o próprio carrinho. VUs não criam nem compartilham mutações de estoque. O volume fica abaixo do limite nativo de 120 chamadas de API por IP a cada 60 segundos; uma resposta 429 continua sendo falha, não resultado esperado. Somente a limpeza respeita `Retry-After` quando necessário, sem repetir requisições medidas.
+| Categoria | Perfil | Workload | Pergunta respondida | Risco |
+|---|---|---|---|---|
+| **Smoke** (Saúde rápida) | `smoke` | 2 it/s por 10 s (produto + rejeição de pedido) | Existe regressão grosseira de latência, erro ou comportamento na entrada da jornada? | `RISK-018`, `RISK-019` |
+| **Smoke** (Saúde pós-merge) | `post-merge-smoke` | 1 it/s por 10 s (Home + catálogo + produto, GET-only) | O commit incorporado na `main` mantém os endpoints públicos saudáveis? | `RISK-018` |
+| **Load** (Carga esperada) | `load` | 3 VUs por 20 s contra carrinho isolado temporário | A validação transacional de pedido permanece determinística sob concorrência esperada? | `RISK-019` |
+| **Avançado** (Jornada de descoberta) | `journey` | 2 VUs por 15 s em funil multi-etapas (`Home → Catálogo → GraphQL Search → Produto`) com think time | Cada etapa da jornada do cliente atende a limites específicos de latência no funil de descoberta? | `RISK-001`, `RISK-018` |
+| **Avançado** (Resiliência sob ramping) | `resilience` | Ramping de VUs em 20 s (1 VU → 3 VUs → 1 VU) em catálogo e produto com think time | A plataforma absorve uma variação controlada de tráfego e se recupera com tempos de resposta estáveis? | `RISK-018`, `RISK-019` |
 
-## Métricas e thresholds
+## Isolamento e rate limits
 
-- `http_req_duration` p95: produto abaixo de 1000 ms; validação de pedido abaixo de 500 ms;
-- `http_req_failed`: taxa igual a zero para respostas esperadas;
-- `checks`: 100% das regras funcionais aprovadas;
-- `dropped_iterations`: zero no smoke de taxa constante;
-- volume: ao menos 20 iterações no smoke e 54 no load.
+O EverShop possui limites nativos de 120 chamadas de API por IP a cada 60 segundos e limite restrito de tentativas de autenticação. Para garantir resultados válidos e reprodutíveis:
 
-Esses limites foram calibrados contra p95 observados de 135–280 ms para produto, 15–30 ms para validação no smoke e 56–125 ms sob três usuários simultâneos, preservando margem para variação do runner. São thresholds de laboratório, não SLA ou SLO de produção, e devem ser refinados somente com histórico comparável.
+1. **Workloads dimensionadas:** Todos os perfis mantêm volume total controlado (abaixo de 80 requisições por execução), evitando bloqueios HTTP 429 artificiais.
+2. **Isolamento de estado no Load:** O runner cria um único carrinho antes do teste, injeta seu identificador no k6 e executa a limpeza obrigatória em `finally`, inclusive se thresholds falharem.
+3. **Leitura não destrutiva nos cenários avançados:** `journey` e `resilience` exercitam endpoints públicos e GraphQL de leitura sem mutações ou dependência de fixtures.
+
+## Métricas e thresholds de decisão
+
+- **Latência (p95):**
+  - Leitura de páginas HTML (Home, catálogo, produto): p95 < 800–1000 ms;
+  - Consulta pública GraphQL API (`journey`): p95 < 500 ms;
+  - Validação transacional de pedido (`smoke`, `load`): p95 < 500 ms;
+  - Resiliência sob ramping (`resilience`): p95 global < 800 ms.
+- **Taxa de erro HTTP (`http_req_failed`):** 0% para todas as respostas esperadas.
+- **Checks funcionais (`checks`):** 100% de aprovação em todos os checkpoints de conteúdo e contrato.
+- **Volume mínimo:** Validado por thresholds de `iterations` em cada cenário.
+
+Esses thresholds são referências calibradas de laboratório, não SLA ou SLO de produção.
 
 ## Execução
 
@@ -32,10 +46,16 @@ Pré-requisitos: SUT saudável, Node.js 22+ e k6 OSS `2.1.0` disponível no `PAT
 Na pasta `quality`:
 
 ```bash
+# Saúde rápida (CI / Gates)
 npm run performance:smoke
+npm run performance:post-merge-smoke
+
+# Carga esperada (execução manual / controlada)
 npm run performance:load
+
+# Cenários avançados de investigação específica
+npm run performance:journey
+npm run performance:resilience
 ```
 
-Use `BASE_URL` somente quando o SUT estiver em outro endereço. Os arquivos `performance-<perfil>-<execução>-summary.json` registram workload, p95, taxa de erro, checks e thresholds; a saída padrão do k6 continua visível e fornece a decisão PASS/FAIL.
-
-Resultados locais são baseline de engenharia e não representam capacidade certificada de produção. Na versão 2.2.1, um UUID de carrinho inexistente chega a HTTP 500; por isso o smoke usa a rejeição HTTP 400 definida pelo schema para ausência do identificador, sem tratar erro interno como resposta esperada.
+Os resumos estruturados `performance-<perfil>-<execução>-summary.json` registram workload, p95, taxa de erro, checks e duração para consumo no Quality Report executivo e auditoria.

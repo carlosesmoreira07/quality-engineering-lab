@@ -14,6 +14,8 @@ on:
         options:
           - smoke
           - load
+          - journey
+          - resilience
 
 concurrency:
   group: quality-gate-${{ github.event.pull_request.number || github.ref }}
@@ -97,6 +99,16 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.performance_profile == 'load' }}
         working-directory: quality
         run: npm run performance:load
+
+      - name: Customer discovery journey — Manual execution
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.performance_profile == 'journey' }}
+        working-directory: quality
+        run: npm run performance:journey
+
+      - name: Ramping resilience — Manual execution
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.performance_profile == 'resilience' }}
+        working-directory: quality
+        run: npm run performance:resilience
 
       - name: Generate Quality Summary
         if: ${{ !cancelled() && hashFiles('quality/test-results/results.json') != '' }}

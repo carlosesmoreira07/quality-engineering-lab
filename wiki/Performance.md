@@ -4,16 +4,19 @@
 
 A descoberta de produtos e a entrada da compra continuam disponíveis, corretas e previsíveis no perfil observado?
 
-O foco principal é **Disponibilidade e previsibilidade da compra** (`RISK-019`). **Desempenho da descoberta de produtos** (`RISK-018`) oferece contexto para a página de produto.
+O foco principal é **Disponibilidade e previsibilidade da compra** (`RISK-019`), **Desempenho da descoberta de produtos** (`RISK-018`) e **Descoberta de produtos ativos** (`RISK-001`).
 
 ## Perfis existentes
 
-| Perfil | Uso | Decisão |
-|---|---|---|
-| Smoke | execução curta e frequente | detecta regressão grosseira de erro, comportamento ou tempo de resposta |
-| Carga controlada | execução manual com baixa concorrência | observa se a validação transacional permanece previsível |
+| Categoria | Perfil | Uso | Decisão |
+|---|---|---|---|
+| Smoke | `smoke` | execução curta e frequente no PR | detecta regressão grosseira de latência, erro ou comportamento |
+| Smoke | `post-merge-smoke` | confirmação pós-merge na `main` | valida disponibilidade pública somente leitura |
+| Carga esperada | `load` | execução manual com concorrência controlada | observa se a validação transacional permanece previsível sob 3 VUs |
+| Cenário avançado | `journey` | simulação de funil de descoberta do cliente | valida latência por etapa (`Home → Catálogo → GraphQL Search → Produto`) com think time |
+| Cenário avançado | `resilience` | ramping controlado de usuários virtuais | avalia estabilidade e recuperação de tempo de resposta em variações de carga |
 
-As leituras usam percentil 95 de tempo de resposta, ausência de erro HTTP inesperado, verificações funcionais e volume mínimo. Os valores são referências do laboratório, não SLA, SLO ou certificação de capacidade de produção.
+As leituras usam percentil 95 (p95) de tempo de resposta, taxa de erro HTTP zero, 100% das verificações funcionais aprovadas e volume mínimo. Os valores são referências de engenharia do laboratório, não SLA, SLO ou certificação de capacidade de produção.
 
 ## Limite importante
 

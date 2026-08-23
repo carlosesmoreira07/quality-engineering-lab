@@ -12,8 +12,8 @@ const executionId = process.env.GITHUB_RUN_ID || Date.now();
 const summaryFile = `performance-${profile}-${executionId}-${process.pid}-summary.json`;
 const temporarySummary = path.join(os.tmpdir(), summaryFile);
 
-if (!['smoke', 'load', 'post-merge-smoke'].includes(profile)) {
-  throw new Error('Perfil inválido. Use smoke, load ou post-merge-smoke.');
+if (!['smoke', 'load', 'post-merge-smoke', 'journey', 'resilience'].includes(profile)) {
+  throw new Error('Perfil inválido. Use smoke, post-merge-smoke, load, journey ou resilience.');
 }
 
 const baseUrl = (process.env.BASE_URL || 'http://localhost:3000').replace(/\/+$/, '');

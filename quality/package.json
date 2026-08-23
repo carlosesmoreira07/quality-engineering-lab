@@ -22,6 +22,8 @@
     "performance:smoke": "node performance/run.mjs smoke",
     "performance:post-merge-smoke": "node performance/run.mjs post-merge-smoke",
     "performance:load": "node performance/run.mjs load",
+    "performance:journey": "node performance/run.mjs journey",
+    "performance:resilience": "node performance/run.mjs resilience",
     "experiment:functional": "node ../experiments/run.mjs EXP-001",
     "experiment:performance": "node ../experiments/run.mjs EXP-002",
     "experiment:security": "node ../experiments/run.mjs EXP-003",

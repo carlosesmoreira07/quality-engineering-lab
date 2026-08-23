@@ -89,7 +89,7 @@ function orderTests(tests) {
 
 async function latestPerformanceSummary() {
   const entries = await readdir(qualityDir, { withFileTypes: true });
-  let candidates = entries.filter((entry) => entry.isFile() && /^performance-smoke-.+-summary\.json$/.test(entry.name)).map((entry) => path.join(qualityDir, entry.name));
+  let candidates = entries.filter((entry) => entry.isFile() && /^performance-(smoke|load|journey|resilience|post-merge-smoke)-.+-summary\.json$/.test(entry.name)).map((entry) => path.join(qualityDir, entry.name));
   if (process.env.GITHUB_RUN_ID) {
     const currentRun = candidates.filter((candidate) => path.basename(candidate).includes(process.env.GITHUB_RUN_ID));
     if (currentRun.length > 0) candidates = currentRun;
