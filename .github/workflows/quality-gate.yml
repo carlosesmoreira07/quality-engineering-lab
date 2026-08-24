@@ -13,9 +13,8 @@ on:
         type: choice
         options:
           - smoke
-          - load
-          - journey
-          - resilience
+          - average-load
+          - traffic-variation
 
 concurrency:
   group: quality-gate-${{ github.event.pull_request.number || github.ref }}
@@ -95,20 +94,15 @@ jobs:
         working-directory: quality
         run: npm run performance:smoke
 
-      - name: Controlled load — Manual execution
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.performance_profile == 'load' }}
+      - name: Carga esperada — Execução manual
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.performance_profile == 'average-load' }}
         working-directory: quality
-        run: npm run performance:load
+        run: npm run performance:average-load
 
-      - name: Customer discovery journey — Manual execution
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.performance_profile == 'journey' }}
+      - name: Variação controlada de tráfego — Execução manual
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.performance_profile == 'traffic-variation' }}
         working-directory: quality
-        run: npm run performance:journey
-
-      - name: Ramping resilience — Manual execution
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.performance_profile == 'resilience' }}
-        working-directory: quality
-        run: npm run performance:resilience
+        run: npm run performance:traffic-variation
 
       - name: Generate Quality Summary
         if: ${{ !cancelled() && hashFiles('quality/test-results/results.json') != '' }}
@@ -122,7 +116,10 @@ jobs:
           test -f quality/test-results/results.json
           test -f quality/playwright-report/index.html
           test -f output/pdf/qel-4-test-evidence.pdf
-          compgen -G 'quality/performance-*-summary.json' > /dev/null
+          compgen -G 'quality/performance-smoke-*-summary.json' > /dev/null || \
+          compgen -G 'quality/performance-average-load-*-summary.json' > /dev/null || \
+          compgen -G 'quality/performance-traffic-variation-*-summary.json' > /dev/null || \
+          compgen -G 'quality/performance-post-merge-smoke-*-summary.json' > /dev/null
 
       - name: Publish test evidence
         if: ${{ !cancelled() }}
