@@ -87,22 +87,62 @@ function orderTests(tests) {
   });
 }
 
-async function latestPerformanceSummary() {
+async function canonicalPerformanceSummary() {
+  const profile = process.env.PERF_PROFILE || 'smoke';
+  const runId = process.env.GITHUB_RUN_ID;
+
   const entries = await readdir(qualityDir, { withFileTypes: true });
-  let candidates = entries.filter((entry) => entry.isFile() && /^performance-smoke-.+-summary\.json$/.test(entry.name)).map((entry) => path.join(qualityDir, entry.name));
-  if (process.env.GITHUB_RUN_ID) {
-    const currentRun = candidates.filter((candidate) => path.basename(candidate).includes(process.env.GITHUB_RUN_ID));
-    if (currentRun.length > 0) candidates = currentRun;
+  let candidates = entries
+    .filter((entry) => entry.isFile() && /^performance-(smoke|average-load|traffic-variation|post-merge-smoke)-.+-summary\.json$/.test(entry.name))
+    .map((entry) => path.join(qualityDir, entry.name));
+
+  if (runId) {
+    // Contexto CI: filtra pelo run atual E pelo perfil exato — determinístico
+    const exact = candidates.filter((candidate) => {
+      const name = path.basename(candidate);
+      return name.includes(runId) && name.startsWith(`performance-${profile}-`);
+    });
+    if (exact.length === 0) {
+      console.warn(`[Quality Report] Nenhum summary encontrado para perfil="${profile}" run_id="${runId}".`);
+      return undefined;
+    }
+    candidates = exact;
+  } else {
+    // Execução local: prefere smoke; avisa se usar outro perfil
+    const smokeFiles = candidates.filter((c) => path.basename(c).startsWith('performance-smoke-'));
+    if (smokeFiles.length > 0) {
+      if (profile !== 'smoke') {
+        console.warn(`[Quality Report] Execução local: usando smoke como referência (PERF_PROFILE="${profile}" ignorado sem GITHUB_RUN_ID).`);
+      }
+      candidates = smokeFiles;
+    } else {
+      console.warn('[Quality Report] Nenhum summary de smoke encontrado localmente; usando o mais recente disponível.');
+    }
   }
+
   const dated = await Promise.all(candidates.map(async (candidate) => ({ candidate, modified: (await stat(candidate)).mtimeMs })));
   dated.sort((left, right) => right.modified - left.modified);
   if (!dated[0]) return undefined;
+
   const summary = JSON.parse(await readFile(dated[0].candidate, 'utf8'));
   const checks = Object.values(summary.root_group?.checks ?? {});
   const checkPasses = checks.reduce((sum, check) => sum + (check.passes ?? 0), 0);
   const checkFailures = checks.reduce((sum, check) => sum + (check.fails ?? 0), 0);
   const failedRequestRate = summary.metrics?.http_req_failed?.value ?? 1;
-  return { passed: summary.qel?.passed ?? (checkFailures === 0 && failedRequestRate === 0), duration: summary.qel?.durationMs, checks, checkPasses, checkFailures, p95: summary.metrics?.http_req_duration?.['p(95)'], failedRequestRate, requests: summary.metrics?.http_reqs?.count ?? 0, iterations: summary.metrics?.iterations?.count ?? 0 };
+  return {
+    passed: summary.qel?.passed ?? (checkFailures === 0 && failedRequestRate === 0),
+    profile: summary.qel?.profile ?? profile,
+    label: summary.qel?.label ?? 'Saúde rápida',
+    businessQuestion: summary.qel?.businessQuestion ?? 'A jornada crítica continua disponível e sem regressão grosseira?',
+    duration: summary.qel?.durationMs,
+    checks,
+    checkPasses,
+    checkFailures,
+    p95: summary.metrics?.http_req_duration?.['p(95)'],
+    failedRequestRate,
+    requests: summary.metrics?.http_reqs?.count ?? 0,
+    iterations: summary.metrics?.iterations?.count ?? 0
+  };
 }
 
 function riskPills(risks, { executive = false } = {}) {
@@ -164,7 +204,9 @@ function performancePage(performance, pageNumber, totalPages) {
   const passed = performance?.passed === true;
   const verifications = performance?.checks ?? [];
   const totalVerifications = (performance?.checkPasses ?? 0) + (performance?.checkFailures ?? 0);
-  return `<section class="page detail-page performance"><header class="section-header"><div><span>Testes não funcionais e performance</span><p>Perfil de validação curto e controlado</p></div><div class="status ${passed ? 'pass' : 'fail'}"><b>${passed ? 'APROVADO' : 'REPROVADO'}</b><small>${formatDuration(performance?.duration)}</small></div></header><h1>Disponibilidade e tempo de resposta da jornada crítica</h1><div class="risk-pills">${riskPills(performanceRisks)}</div><div class="story-grid"><article><h3>Risco de negócio</h3><p>Degradação pode comprometer descoberta, validação de pedido e confiança na compra.</p></article><article><h3>Perfil de validação</h3><p>Uso baixo e controlado observa disponibilidade, respostas corretas e previsibilidade sem executar carga intensa.</p></article><article class="decision"><h3>Sinal para decisão</h3><p>${passed ? 'Disponibilidade e tempo de resposta permaneceram dentro da referência esperada.' : 'O sinal de performance está ausente ou reprovado; a mudança deve ser bloqueada.'}</p></article></div><div class="performance-metrics"><article><b>${performance?.p95 !== undefined ? `${performance.p95.toFixed(0)} ms` : 'n/d'}</b><span>tempo de resposta observado (p95)</span></article><article><b>${((performance?.failedRequestRate ?? 1) * 100).toFixed(1)}%</b><span>indisponibilidade observada</span></article><article><b>${performance?.requests ?? 0}</b><span>respostas observadas</span></article><article><b>${performance?.checkPasses ?? 0}/${totalVerifications}</b><span>verificações aprovadas</span></article></div><section class="verification-list"><h2>Resultados que sustentam a decisão</h2><div>${verifications.map((check) => `<article><i class="${check.fails === 0 ? 'pass' : 'fail'}"></i><p>${escapeHtml(check.name)}</p><b>${check.passes ?? 0} aprovadas · ${check.fails ?? 0} falhas</b></article>`).join('') || '<p>Resultado de performance não encontrado para esta execução.</p>'}</div></section>${footer(pageNumber, totalPages, 'Performance · risco → perfil de validação → resultado → decisão')}</section>`;
+  const profileLabel = escapeHtml(performance?.label ?? 'Saúde rápida');
+  const businessQuestion = escapeHtml(performance?.businessQuestion ?? 'A jornada crítica continua disponível e sem regressão grosseira?');
+  return `<section class="page detail-page performance"><header class="section-header"><div><span>Testes não funcionais e performance</span><p>${profileLabel} · ${businessQuestion}</p></div><div class="status ${passed ? 'pass' : 'fail'}"><b>${passed ? 'APROVADO' : 'REPROVADO'}</b><small>${formatDuration(performance?.duration)}</small></div></header><h1>Disponibilidade e tempo de resposta da jornada de descoberta</h1><div class="risk-pills">${riskPills(performanceRisks)}</div><div class="story-grid"><article><h3>Risco de negócio</h3><p>Degradação pode comprometer descoberta, visualização do produto e confiança na compra.</p></article><article><h3>Perfil executado</h3><p>${businessQuestion}</p></article><article class="decision"><h3>Sinal para decisão</h3><p>${passed ? 'Disponibilidade e tempo de resposta permaneceram dentro da referência do laboratório.' : 'O sinal de performance está ausente ou reprovado; a mudança deve ser bloqueada.'}</p></article></div><div class="performance-metrics"><article><b>${performance?.p95 !== undefined ? `${performance.p95.toFixed(0)} ms` : 'n/d'}</b><span>tempo de resposta observado (p95)</span></article><article><b>${((performance?.failedRequestRate ?? 1) * 100).toFixed(1)}%</b><span>indisponibilidade observada</span></article><article><b>${performance?.requests ?? 0}</b><span>respostas observadas</span></article><article><b>${performance?.checkPasses ?? 0}/${totalVerifications}</b><span>verificações aprovadas</span></article></div><section class="verification-list"><h2>Resultados que sustentam a decisão</h2><div>${verifications.map((check) => `<article><i class="${check.fails === 0 ? 'pass' : 'fail'}"></i><p>${escapeHtml(check.name)}</p><b>${check.passes ?? 0} aprovadas · ${check.fails ?? 0} falhas</b></article>`).join('') || '<p>Resultado de performance não encontrado para esta execução.</p>'}</div></section>${footer(pageNumber, totalPages, `Performance · ${profileLabel} · risco → perfil → resultado → decisão`)}</section>`;
 }
 
 function overviewPage(suites, riskIds, pageNumber, totalPages) {
@@ -192,7 +234,7 @@ for (const { test, evidence } of testsWithEvidence) {
 }
 if (evidenceProblems.length > 0) throw new Error(`Quality Report bloqueado por evidência incompleta:\n- ${evidenceProblems.join('\n- ')}`);
 
-const performance = await latestPerformanceSummary();
+const performance = await canonicalPerformanceSummary();
 const functionalTests = tests.filter((test) => suiteKey(test) === 'functional');
 const securityTests = tests.filter((test) => suiteKey(test) === 'security');
 const total = tests.length;
