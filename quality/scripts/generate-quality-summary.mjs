@@ -72,14 +72,6 @@ function formatDuration(milliseconds) {
   return `${Math.floor(milliseconds / 60_000)} min ${Math.round((milliseconds % 60_000) / 1000)} s`;
 }
 
-function gitValue(...args) {
-  try {
-    return execFileSync('git', args, { cwd: repositoryDir, encoding: 'utf8' }).trim();
-  } catch {
-    return 'local';
-  }
-}
-
 function resolveAttachmentPath(value) {
   return !value ? undefined : path.isAbsolute(value) ? value : path.resolve(qualityDir, value);
 }
@@ -97,10 +89,22 @@ async function jsonEvidence(attachment) {
   return attachmentPath ? JSON.parse(await readFile(attachmentPath, 'utf8')) : undefined;
 }
 
+function isWebTest(test) {
+  const normalizedFile = test.file.replaceAll('\\', '/');
+  return normalizedFile.includes('/web/') || test.tags.includes('web') || test.attachments.some((a) => a.contentType === 'image/png');
+}
+
 function suiteKey(test) {
   const normalizedFile = test.file.replaceAll('\\', '/');
   const behavior = annotationValues(test, 'behavior').join(' ');
-  if (normalizedFile.includes('/security/') || (annotationValues(test, 'risk').includes('RISK-016') && /bloqueio|fronteira/i.test(behavior))) {
+  const risks = annotationValues(test, 'risk');
+  if (
+    normalizedFile.includes('/security/') ||
+    normalizedFile.includes('authentication') ||
+    risks.includes('RISK-004') ||
+    risks.includes('RISK-005') ||
+    (risks.includes('RISK-016') && /administrativ|anônimo|fronteira|autentica/i.test(behavior))
+  ) {
     return 'security';
   }
   return 'functional';
@@ -112,8 +116,22 @@ function riskScore(test) {
 
 function orderTests(tests) {
   return [...tests].sort((left, right) => {
-    const suiteDifference = (suiteKey(left) === 'functional' ? 1 : 2) - (suiteKey(right) === 'functional' ? 1 : 2);
-    return suiteDifference || riskScore(right) - riskScore(left) || left.title.localeCompare(right.title, 'pt-BR');
+    // 1. Suíte: Funcional primeiro, depois Segurança
+    const suiteLeft = suiteKey(left) === 'functional' ? 1 : 2;
+    const suiteRight = suiteKey(right) === 'functional' ? 1 : 2;
+    if (suiteLeft !== suiteRight) return suiteLeft - suiteRight;
+
+    // 2. Modalidade: Web primeiro, depois API
+    const typeLeft = isWebTest(left) ? 1 : 2;
+    const typeRight = isWebTest(right) ? 1 : 2;
+    if (typeLeft !== typeRight) return typeLeft - typeRight;
+
+    // 3. Prioridade de risco
+    const riskDiff = riskScore(right) - riskScore(left);
+    if (riskDiff !== 0) return riskDiff;
+
+    // 4. Título alfabético
+    return left.title.localeCompare(right.title, 'pt-BR');
   });
 }
 
@@ -160,6 +178,13 @@ const DECISION_DESCRIPTIONS = {
   }
 };
 
+const PROFILE_LABELS = {
+  smoke: 'Verificação ágil de saúde da aplicação',
+  'post-merge-smoke': 'Verificação de integridade pós-merge',
+  'average-load': 'Estabilidade sob concorrência esperada',
+  'traffic-variation': 'Estabilidade sob variação controlada de tráfego'
+};
+
 async function canonicalPerformanceSummary() {
   const profile = process.env.PERF_PROFILE || 'smoke';
   const runId = process.env.GITHUB_RUN_ID;
@@ -200,11 +225,12 @@ async function canonicalPerformanceSummary() {
   const checkPasses = checks.reduce((sum, check) => sum + (check.passes ?? 0), 0);
   const checkFailures = checks.reduce((sum, check) => sum + (check.fails ?? 0), 0);
   const failedRequestRate = summary.metrics?.http_req_failed?.value ?? 0;
+  const rawProfile = summary.qel?.profile ?? profile;
 
   return {
     passed: summary.qel?.passed ?? (checkFailures === 0 && failedRequestRate === 0),
-    profile: summary.qel?.profile ?? profile,
-    label: summary.qel?.label ?? 'Saúde rápida após uma mudança',
+    profile: rawProfile,
+    label: PROFILE_LABELS[rawProfile] ?? summary.qel?.label ?? 'Verificação ágil de saúde da aplicação',
     businessQuestion: summary.qel?.businessQuestion ?? 'A jornada de descoberta de produto continua disponível e sem regressão grosseira?',
     duration: summary.qel?.durationMs,
     checks,
@@ -280,20 +306,21 @@ function footer(page, totalPages, label) {
 
 /**
  * 1 TESTE = EXATAMENTE 1 PÁGINA EXECUTIVA
- * Combina Risco, O que foi validado, Decisão e Evidência em layout integrado.
+ * Combina Risco, O que foi validado, Decisão e Evidência em layout integrado com link para o resumo.
  */
-function testPage(testWithEvidence, pageNumber, totalPages, suitePosition, suiteTotal) {
+function testPage(testWithEvidence, pageNumber, totalPages, suitePosition, suiteTotal, globalIndex) {
   const { test, evidence } = testWithEvidence;
   const behavior = annotationValues(test, 'behavior')[0] ?? test.title;
   const intent = annotationValues(test, 'intent')[0] ?? 'Controle automatizado associado ao cenário.';
   const validations = annotationValues(test, 'validation');
   const risks = annotationValues(test, 'risk');
   const suite = suiteKey(test);
+  const web = isWebTest(test);
   const primaryRiskId = [...risks].sort((left, right) => (riskCatalog[right]?.priority ?? 0) - (riskCatalog[left]?.priority ?? 0))[0];
   const primaryRisk = riskCatalog[primaryRiskId];
-  const suiteTitle = suite === 'functional' ? 'Testes funcionais e regressivos' : 'Testes de segurança';
+  const suiteTitle = suite === 'functional' ? 'Testes funcionais e regressivos' : 'Testes de segurança e acessos';
 
-  // Specific, non-repetitive executive decision
+  // Decisão executiva específica e sem repetição
   const decisionEntry = DECISION_DESCRIPTIONS[behavior];
   const decisionText = test.passed
     ? (decisionEntry?.pass ?? `O comportamento "${behavior}" foi validado com sucesso e atende aos critérios de liberação.`)
@@ -304,7 +331,6 @@ function testPage(testWithEvidence, pageNumber, totalPages, suitePosition, suite
 
   let evidenceMarkup = '';
   if (imageItems.length === 1 && jsonItems.length === 0) {
-    // Single image: full height visual proof
     evidenceMarkup = `
       <div class="evidence-box visual-single">
         <figure class="visual-proof">
@@ -313,7 +339,6 @@ function testPage(testWithEvidence, pageNumber, totalPages, suitePosition, suite
         </figure>
       </div>`;
   } else if (imageItems.length === 1 && jsonItems.length >= 1) {
-    // 1 image + 1 JSON: integrated view
     evidenceMarkup = `
       <div class="evidence-box visual-hybrid">
         <figure class="visual-proof compact">
@@ -325,16 +350,17 @@ function testPage(testWithEvidence, pageNumber, totalPages, suitePosition, suite
         </div>
       </div>`;
   } else if (imageItems.length === 0 && jsonItems.length >= 1) {
-    // Pure JSON / API evidence
     evidenceMarkup = `
       <div class="evidence-box api-single">
         <div class="api-proof-full">
-          <div class="evidence-title">Comprovante técnico e contratual</div>
+          <div class="evidence-header-tag">
+            <span class="evidence-title">Comprovante técnico e contratual</span>
+            <span class="modality-pill">API / Contrato</span>
+          </div>
           ${structuredEvidenceMarkup(jsonItems[0].evidence, { compact: false })}
         </div>
       </div>`;
   } else if (imageItems.length >= 2) {
-    // 2 images side-by-side
     evidenceMarkup = `
       <div class="evidence-box visual-dual">
         <figure class="visual-proof dual">
@@ -349,15 +375,21 @@ function testPage(testWithEvidence, pageNumber, totalPages, suitePosition, suite
   }
 
   return `
-    <section class="page detail-page ${suite}">
+    <section id="case-${globalIndex}" class="page detail-page ${suite}">
       <header class="section-header">
-        <div>
-          <span>${escapeHtml(suiteTitle)}</span>
-          <p>Caso ${suitePosition} de ${suiteTotal} · visão executiva da validação</p>
+        <div class="header-left">
+          <div class="suite-badge-row">
+            <span class="suite-name">${escapeHtml(suiteTitle)}</span>
+            <span class="modality-tag ${web ? 'web' : 'api'}">${web ? 'Interface Web' : 'API / Contrato'}</span>
+          </div>
+          <p class="case-counter">Caso ${suitePosition} de ${suiteTotal} · visão executiva da validação</p>
         </div>
-        <div class="status ${test.passed ? 'pass' : 'fail'}">
-          <b>${test.passed ? 'APROVADO' : 'REPROVADO'}</b>
-          <small>${formatDuration(test.duration)}</small>
+        <div class="header-right">
+          <a href="#page-1" class="back-link" title="Voltar à visão executiva e cobertura">↑ Voltar ao resumo</a>
+          <div class="status ${test.passed ? 'pass' : 'fail'}">
+            <b>${test.passed ? 'APROVADO' : 'REPROVADO'}</b>
+            <small>${formatDuration(test.duration)}</small>
+          </div>
         </div>
       </header>
 
@@ -369,7 +401,7 @@ function testPage(testWithEvidence, pageNumber, totalPages, suitePosition, suite
         <aside class="case-sidebar">
           <article class="case-card risk-card">
             <h3>O que poderia dar errado?</h3>
-            <p><strong>${escapeHtml(primaryRisk?.name ?? 'Risco de negócio')}:</strong> ${escapeHtml(primaryRisk?.risk ?? 'Falha potencial no fluxo comercial.')}</p>
+            <p class="risk-text">${escapeHtml(primaryRisk?.risk ?? 'Falha potencial no fluxo de negócio.')}</p>
           </article>
 
           <article class="case-card control-card">
@@ -401,22 +433,28 @@ function performancePage(performance, pageNumber, totalPages) {
   const passed = performance?.passed === true;
   const verifications = performance?.checks ?? [];
   const totalVerifications = (performance?.checkPasses ?? 0) + (performance?.checkFailures ?? 0);
-  const profileLabel = escapeHtml(performance?.label ?? 'Saúde rápida após uma mudança');
+  const profileLabel = escapeHtml(performance?.label ?? 'Verificação ágil de saúde da aplicação');
   const businessQuestion = escapeHtml(performance?.businessQuestion ?? 'A jornada de descoberta de produto continua disponível e sem regressão grosseira?');
 
-  const p95Text = performance?.p95 !== undefined ? `${performance.p95.toFixed(0)} ms` : 'n/d';
-  const errorRateText = `${((performance?.failedRequestRate ?? 0) * 100).toFixed(1)}%`;
+  const p95Value = performance?.p95 !== undefined ? `${performance.p95.toFixed(0)} ms` : 'n/d';
+  const errorRateValue = `${((performance?.failedRequestRate ?? 0) * 100).toFixed(1)}%`;
 
   return `
-    <section class="page detail-page performance">
+    <section id="perf-case" class="page detail-page performance">
       <header class="section-header">
-        <div>
-          <span>Testes não funcionais e performance</span>
-          <p>${profileLabel}</p>
+        <div class="header-left">
+          <div class="suite-badge-row">
+            <span class="suite-name">Testes não funcionais e performance</span>
+            <span class="modality-tag perf">k6 · Jornada de descoberta</span>
+          </div>
+          <p class="case-counter">${profileLabel}</p>
         </div>
-        <div class="status ${passed ? 'pass' : 'fail'}">
-          <b>${passed ? 'APROVADO' : 'REPROVADO'}</b>
-          <small>${formatDuration(performance?.duration)}</small>
+        <div class="header-right">
+          <a href="#page-1" class="back-link" title="Voltar à visão executiva e cobertura">↑ Voltar ao resumo</a>
+          <div class="status ${passed ? 'pass' : 'fail'}">
+            <b>${passed ? 'APROVADO' : 'REPROVADO'}</b>
+            <small>${formatDuration(performance?.duration)}</small>
+          </div>
         </div>
       </header>
 
@@ -426,7 +464,7 @@ function performancePage(performance, pageNumber, totalPages) {
       <div class="perf-story-grid">
         <article class="perf-story-card">
           <h3>O que poderia dar errado?</h3>
-          <p>Lentidão ou instabilidade degradam a vitrine de produtos e reduzem a confiança de compra do cliente.</p>
+          <p>Lentidão ou indisponibilidade degradam a experiência de navegação e reduzem a confiança de compra do cliente.</p>
         </article>
         <article class="perf-story-card">
           <h3>Pergunta respondida</h3>
@@ -434,41 +472,48 @@ function performancePage(performance, pageNumber, totalPages) {
         </article>
         <article class="perf-story-card decision">
           <h3>Decisão de performance</h3>
-          <p>${passed ? '95% das respostas ocorreram dentro do limite esperado para o laboratório, sem indisponibilidade registrada.' : 'Degradação ou erro de performance identificado; a mudança deve ser bloqueada.'}</p>
+          <p>${passed ? '95% das respostas ocorreram dentro do limite esperado para o laboratório, sem indisponibilidade registrada.' : 'Degradação de tempo de resposta ou indisponibilidade detectada; a versão deve ser bloqueada.'}</p>
         </article>
       </div>
 
       <div class="perf-metrics-strip">
         <article>
-          <b>95% em até ${p95Text}</b>
-          <span>tempo de resposta observado (p95 global)</span>
+          <strong class="metric-num">${p95Value}</strong>
+          <span class="metric-main">95% das respostas em até ${p95Value}</span>
+          <small class="metric-desc">Tempo de resposta observado (p95 global)</small>
         </article>
         <article>
-          <b>${errorRateText} de indisponibilidade</b>
-          <span>respostas com erro ou falha de conexão</span>
+          <strong class="metric-num">${errorRateValue}</strong>
+          <span class="metric-main">Zero indisponibilidade</span>
+          <small class="metric-desc">Taxa de erro ou recusa de conexão</small>
         </article>
         <article>
-          <b>${performance?.requests ?? 0} respostas analisadas</b>
-          <span>iterações completas na jornada</span>
+          <strong class="metric-num">${performance?.requests ?? 0}</strong>
+          <span class="metric-main">Respostas analisadas</span>
+          <small class="metric-desc">Iterações completas na jornada de descoberta</small>
         </article>
         <article>
-          <b>${performance?.checkPasses ?? 0}/${totalVerifications} verificações</b>
-          <span>100% de conformidade funcional</span>
+          <strong class="metric-num">${performance?.checkPasses ?? 0}/${totalVerifications}</strong>
+          <span class="metric-main">Verificações aprovadas</span>
+          <small class="metric-desc">100% de conformidade funcional nas etapas</small>
         </article>
       </div>
 
       <section class="perf-verifications">
         <h2>Resultados detalhados por etapa da jornada</h2>
         <div class="perf-checks-grid">
-          ${verifications.map((check) => `
-            <article class="perf-check-item">
-              <i class="${check.fails === 0 ? 'pass' : 'fail'}"></i>
-              <span class="check-title">${escapeHtml(check.name)}</span>
-              <strong class="check-result">${check.passes ?? 0} aprovadas ${check.fails > 0 ? `· ${check.fails} falhas` : ''}</strong>
-            </article>
-          `).join('') || '<p>Resultado de performance não encontrado para esta execução.</p>'}
+          ${verifications.map((check) => {
+            const cleanName = check.name.replace(/^\[(Saúde|Carga|Variação)\]\s*/i, '');
+            return `
+              <article class="perf-check-item">
+                <i class="${check.fails === 0 ? 'pass' : 'fail'}"></i>
+                <span class="check-title">${escapeHtml(cleanName)}</span>
+                <strong class="check-result">${check.passes ?? 0} aprovadas ${check.fails > 0 ? `· ${check.fails} falhas` : ''}</strong>
+              </article>
+            `;
+          }).join('') || '<p>Resultado de performance não encontrado para esta execução.</p>'}
         </div>
-        <p class="perf-disclaimer">Thresholds calibrados como referência de laboratório (EverShop 2.2.1 em contêiner) para detecção de regressão, não constituem SLA de produção.</p>
+        <p class="perf-disclaimer">Thresholds calibrados como referência de engenharia do laboratório (EverShop 2.2.1 em contêiner) para detecção de regressão, não constituem SLA de produção.</p>
       </section>
 
       ${footer(pageNumber, totalPages, `Performance · ${profileLabel} · risco → perfil → resultado → decisão`)}
@@ -476,140 +521,82 @@ function performancePage(performance, pageNumber, totalPages) {
   `;
 }
 
-function overviewPage(suites, riskIds, pageNumber, totalPages) {
-  return `
-    <section class="page overview-page">
-      <div class="brand-line"></div>
-      <header>
-        <span>QUALITY ENGINEERING LAB</span>
-        <p>Da decisão executiva às evidências</p>
-      </header>
-      <h1>Como esta versão foi avaliada</h1>
-      <p class="lead">O relatório parte da decisão consolidada, organiza os controles por área de proteção e apresenta a evidência direta de cada caso. A conclusão reúne os sinais antes de demonstrar onde as barreiras atuam no ciclo.</p>
-
-      <div class="area-grid">
-        <article>
-          <b>01</b>
-          <h2>Funcional e regressivo</h2>
-          <p>Protege jornadas de compra, integridade de preços, itens e cálculos do carrinho.</p>
-          <strong>${suites.functional.passed}/${suites.functional.total} controles aprovados</strong>
-        </article>
-        <article>
-          <b>02</b>
-          <h2>Segurança e acessos</h2>
-          <p>Protege fronteiras de autorização, isolamento entre clientes e painel administrativo.</p>
-          <strong>${suites.security.passed}/${suites.security.total} controles aprovados</strong>
-        </article>
-        <article>
-          <b>03</b>
-          <h2>Performance operacional</h2>
-          <p>Observa disponibilidade e tempo de resposta da jornada crítica sob carga controlada.</p>
-          <strong>${suites.performance.approved ? 'Sinal aprovado' : 'Sinal reprovado'}</strong>
-        </article>
-      </div>
-
-      <section class="coverage">
-        <h2>Cobertura orientada a riscos de negócio</h2>
-        <div>${riskPills(riskIds, { executive: true })}</div>
-      </section>
-
-      ${footer(pageNumber, totalPages, 'Contexto → áreas de validação → evidências → conclusão')}
-    </section>
-  `;
-}
-
-function conclusionPage(suites, allApproved, evidenceCount, pageNumber, totalPages) {
-  return `
-    <section class="page conclusion-page">
-      <div class="brand-line"></div>
-      <header>
-        <span>QUALITY ENGINEERING LAB</span>
-        <p>Parecer Executivo</p>
-      </header>
-      <h1>${allApproved ? 'Os sinais sustentam a evolução segura da versão' : 'A versão necessita de correção antes de avançar'}</h1>
-      <p class="lead">A decisão combina conformidade funcional, segurança de fronteiras, performance previsível e evidências auditáveis. Nenhuma barreira isolada substitui as demais.</p>
-
-      <div class="conclusion-grid">
-        <article>
-          <h2>Comportamento de negócio</h2>
-          <strong>${suites.functional.passed}/${suites.functional.total}</strong>
-          <p>jornadas e regras de compra aprovadas</p>
-        </article>
-        <article>
-          <h2>Fronteiras de confiança</h2>
-          <strong>${suites.security.passed}/${suites.security.total}</strong>
-          <p>controles de acesso e isolamento aprovados</p>
-        </article>
-        <article>
-          <h2>Saúde operacional</h2>
-          <strong>${suites.performance.p95}</strong>
-          <p>tempo de resposta observado (percentil 95)</p>
-        </article>
-        <article>
-          <h2>Auditabilidade</h2>
-          <strong>${evidenceCount}</strong>
-          <p>evidências úteis vinculadas aos riscos</p>
-        </article>
-      </div>
-
-      <div class="final-decision ${allApproved ? 'pass' : 'fail'}">
-        <h2>Decisão consolidada: ${allApproved ? 'APROVADO' : 'REPROVADO'}</h2>
-        <p>${allApproved ? 'Todos os controles obrigatórios permaneceram verdes no escopo exercitado, sem regressões detectadas.' : 'Pelo menos uma barreira obrigatória foi reprovada ou não produziu sinal conclusivo para liberação.'}</p>
-      </div>
-
-      <p class="residual"><b>Limite da decisão:</b> o resultado reflete o escopo reproduzível do Sistema Sob Teste (EverShop 2.2.1) e não representa pentest nem certificação de capacidade de produção. Fluxos com gateways externos de frete e pagamento permanecem fora do recorte atual.</p>
-
-      ${footer(pageNumber, totalPages, 'Conclusão · sinais complementares e decisão determinística')}
-    </section>
-  `;
-}
-
 function timelinePage(suites, pageNumber, totalPages) {
-  const stage = (number, title, body, tone = '') => `
-    <article class="stage ${tone}">
-      <b>${number}</b>
-      <h3>${escapeHtml(title)}</h3>
+  const milestone = (num, title, body, status = '') => `
+    <article class="milestone-card ${status}">
+      <div class="ms-header">
+        <b class="ms-num">${num}</b>
+        <h4>${escapeHtml(title)}</h4>
+      </div>
       <p>${escapeHtml(body)}</p>
-    </article>`;
+    </article>
+  `;
 
   return `
-    <section class="page timeline-page">
+    <section id="timeline" class="page timeline-page">
       <div class="brand-line"></div>
-      <header>
-        <span>QUALITY ENGINEERING LAB</span>
-        <p>Modelo de proteção da mudança</p>
+      <header class="timeline-header">
+        <div>
+          <span>QUALITY ENGINEERING LAB</span>
+          <h1>Onde a Engenharia de Qualidade atua no ciclo de valor</h1>
+          <p>Atuação contínua desde o refinamento de requisitos até a observabilidade em produção, garantindo previsibilidade e qualidade determinística.</p>
+        </div>
+        <a href="#page-1" class="back-link" title="Voltar à visão executiva e cobertura">↑ Voltar ao resumo</a>
       </header>
-      <h1>Onde a Engenharia de Qualidade protege o ciclo</h1>
-      <p class="lead">As barreiras de qualidade atuam de forma progressiva e transformam riscos em sinais objetivos antes de qualquer liberação.</p>
 
-      <div class="timeline-row">
-        ${stage('01', 'Mudança proposta', 'Riscos e impacto de negócio orientam o recorte de teste.')}
-        <i>→</i>
-        ${stage('02', 'Desenvolvimento', 'Rastreabilidade e critérios de aceite integrados antes do merge.')}
-        <i>→</i>
-        ${stage('03', 'Validação funcional', `${suites.functional.passed}/${suites.functional.total} controles protegem jornadas de compra.`, suites.functional.approved ? 'pass' : 'fail')}
-        <i>→</i>
-        ${stage('04', 'Segurança e acessos', `${suites.security.passed}/${suites.security.total} controles blindam dados e fronteiras.`, suites.security.approved ? 'pass' : 'fail')}
+      <div class="timeline-pillars-grid">
+        <!-- Pilar 1: Descoberta e Refinamento -->
+        <div class="pillar">
+          <div class="pillar-title">1. Descoberta e Refinamento</div>
+          <div class="pillar-cards">
+            ${milestone('01', 'Entendimento do problema', 'Mapeamento precoce de riscos e impacto de negócio antes de codificar.')}
+            ${milestone('02', 'Apoio ao PO e critérios', 'Estruturação de histórias com regras de negócio e critérios de aceite inequívocos.')}
+            ${milestone('03', 'DoR e DoD objetivos', 'Critérios claros para iniciar o desenvolvimento e aceitar a entrega.')}
+          </div>
+        </div>
+
+        <!-- Pilar 2: Construção e Qualidade Integrada -->
+        <div class="pillar">
+          <div class="pillar-title">2. Construção e Automação</div>
+          <div class="pillar-cards">
+            ${milestone('04', 'Apoio ao desenvolvimento', 'Instruções de teste, dados sintéticos e automação guiada no fluxo dev.')}
+            ${milestone('05', 'Validação funcional', `${suites.functional.passed}/${suites.functional.total} controles protegem jornadas de compra e cálculos.`, suites.functional.approved ? 'pass' : 'fail')}
+            ${milestone('06', 'Segurança e acessos', `${suites.security.passed}/${suites.security.total} controles blindam rotas restritas e isolamento.`, suites.security.approved ? 'pass' : 'fail')}
+            ${milestone('07', 'Performance operacional', 'Verificação preventiva de latência e concorrência sob carga.', suites.performance.approved ? 'pass' : 'fail')}
+          </div>
+        </div>
+
+        <!-- Pilar 3: Homologação e Decisão -->
+        <div class="pillar">
+          <div class="pillar-title">3. Homologação e Decisão</div>
+          <div class="pillar-cards">
+            ${milestone('08', 'Evidências auditáveis', 'Capturas e comprovantes técnicos estruturados para aceite do PO.', suites.evidence.approved ? 'pass' : 'fail')}
+            ${milestone('09', 'Quality Gate determinístico', 'Aprovação ou bloqueio objetivo em CI sem tolerância subjetiva.', suites.allApproved ? 'pass' : 'fail')}
+          </div>
+        </div>
+
+        <!-- Pilar 4: Liberação e Pós-Produção -->
+        <div class="pillar">
+          <div class="pillar-title">4. Liberação e Operação</div>
+          <div class="pillar-cards">
+            ${milestone('10', 'Smoke pós-implantação', 'Validação ágil de saúde e rotas públicas após o deploy na main.')}
+            ${milestone('11', 'Observabilidade contínua', 'Acompanhamento de métricas, erros e feedback de comportamento real.')}
+          </div>
+        </div>
       </div>
 
-      <div class="timeline-turn">↓</div>
-
-      <div class="timeline-row second">
-        ${stage('08', 'Liberação confiável', 'A versão avança somente com todas as barreiras verdes.', suites.allApproved ? 'pass' : 'fail')}
-        <i>←</i>
-        ${stage('07', 'Decisão determinística', 'Quality Gate aprova ou bloqueia sem tolerância subjetiva.', suites.allApproved ? 'pass' : 'fail')}
-        <i>←</i>
-        ${stage('06', 'Evidências auditáveis', 'Capturas e comprovantes técnicos comprovam o resultado.', suites.evidence.approved ? 'pass' : 'fail')}
-        <i>←</i>
-        ${stage('05', 'Performance', 'Disponibilidade e tempo de resposta verificados sob carga.', suites.performance.approved ? 'pass' : 'fail')}
+      <div class="timeline-footer-strip">
+        <div class="ai-banner">
+          <b>Aceleração por IA Consultiva:</b>
+          <span>Análise de impacto em cards Jira, apoio na modelagem de testes e síntese de relatórios executivos. Decisões, código e Quality Gates permanecem 100% sob controle e revisão humana.</span>
+        </div>
+        <div class="gate-banner">
+          <b>Regra de bloqueio determinística:</b>
+          <span>Qualquer falha em barreira obrigatória reprova o pipeline de imediato. Sem tolerância percentual ou score subjetivo.</span>
+        </div>
       </div>
 
-      <div class="blocking-rule">
-        <h2>Regra de bloqueio determinística</h2>
-        <p>Qualquer falha em barreira obrigatória reprova o pipeline de imediato. Não há tolerância percentual, score ponderado ou aprovação consultiva por IA.</p>
-      </div>
-
-      ${footer(pageNumber, totalPages, 'Linha do tempo · qualidade integrada ao fluxo de desenvolvimento')}
+      ${footer(pageNumber, totalPages, 'Linha do tempo · Engenharia de Qualidade integrada a todo o ciclo de vida do software')}
     </section>
   `;
 }
@@ -632,8 +619,8 @@ for (const { test, evidence } of testsWithEvidence) {
 if (evidenceProblems.length > 0) throw new Error(`Quality Report bloqueado por evidência incompleta:\n- ${evidenceProblems.join('\n- ')}`);
 
 const performance = await canonicalPerformanceSummary();
-const functionalTests = tests.filter((test) => suiteKey(test) === 'functional');
-const securityTests = tests.filter((test) => suiteKey(test) === 'security');
+const functionalTests = testsWithEvidence.filter(({ test }) => suiteKey(test) === 'functional');
+const securityTests = testsWithEvidence.filter(({ test }) => suiteKey(test) === 'security');
 const total = tests.length;
 const passed = tests.filter((test) => test.passed).length;
 const failures = total - passed;
@@ -644,24 +631,26 @@ const riskIds = [...new Set([...tests.flatMap((test) => annotationValues(test, '
 const testDuration = report.stats?.duration ?? tests.reduce((sum, test) => sum + test.duration, 0);
 const totalDuration = testDuration + (performance?.duration ?? 0);
 const startedAt = report.stats?.startTime ? new Date(report.stats.startTime) : new Date();
-const commit = gitValue('rev-parse', '--short', 'HEAD');
 const evidenceCount = testsWithEvidence.reduce((count, item) => count + item.evidence.length, 0) + (performance ? 1 : 0);
 
-// REGRA: 1 TESTE = 1 PÁGINA
-// Total: Capa (1) + Visão Geral (1) + N Testes (N) + Performance (1) + Conclusão (1) + Linha do Tempo (1) = 5 + N
-const totalPages = 5 + testsWithEvidence.length;
+// Total de Páginas:
+// Pág 1: Resumo Executivo + Cobertura de Riscos com Links
+// Págs 2 a 11: 10 Casos de Teste (6 Funcionais + 4 Segurança)
+// Pág 12: Performance Operacional
+// Pág 13: Linha do Tempo em Todo o Ciclo
+const totalPages = 3 + testsWithEvidence.length;
 let pageNumber = 1;
 
 const suiteStatus = {
   functional: {
     total: functionalTests.length,
-    passed: functionalTests.filter((test) => test.passed).length,
-    approved: functionalTests.length > 0 && functionalTests.every((test) => test.passed)
+    passed: functionalTests.filter(({ test }) => test.passed).length,
+    approved: functionalTests.length > 0 && functionalTests.every(({ test }) => test.passed)
   },
   security: {
     total: securityTests.length,
-    passed: securityTests.filter((test) => test.passed).length,
-    approved: securityTests.length > 0 && securityTests.every((test) => test.passed)
+    passed: securityTests.filter(({ test }) => test.passed).length,
+    approved: securityTests.length > 0 && securityTests.every(({ test }) => test.passed)
   },
   performance: {
     approved: performance?.passed === true,
@@ -672,8 +661,41 @@ const suiteStatus = {
   allApproved
 };
 
+// Renderização dos cards de cobertura interativos na Página 1
+const coverageCards = testsWithEvidence.map((item, idx) => {
+  const behavior = annotationValues(item.test, 'behavior')[0] ?? item.test.title;
+  const suite = suiteKey(item.test);
+  const web = isWebTest(item.test);
+  const primaryRiskId = annotationValues(item.test, 'risk')[0];
+  const primaryRisk = riskCatalog[primaryRiskId];
+  const tagLabel = suite === 'security' ? 'Segurança' : web ? 'Web' : 'API';
+  const tagClass = suite === 'security' ? 'sec' : web ? 'web' : 'api';
+
+  return `
+    <a href="#case-${idx + 1}" class="cov-item" title="Ver evidência e detalhes do caso">
+      <div class="cov-top">
+        <span class="cov-tag ${tagClass}">${tagLabel}</span>
+        <span class="cov-risk">${escapeHtml(primaryRisk?.id ?? 'RISCO')} · ${escapeHtml(primaryRisk?.severity ?? 'Crítico')}</span>
+      </div>
+      <strong class="cov-name">${escapeHtml(behavior)}</strong>
+      <span class="cov-action">Ver evidência →</span>
+    </a>
+  `;
+}).join('');
+
+const perfCoverageCard = `
+  <a href="#perf-case" class="cov-item perf" title="Ver métricas e etapas da jornada de descoberta">
+    <div class="cov-top">
+      <span class="cov-tag perf">Performance</span>
+      <span class="cov-risk">RISK-019 · Crítico</span>
+    </div>
+    <strong class="cov-name">Desempenho da jornada de descoberta sob carga</strong>
+    <span class="cov-action">Ver métricas →</span>
+  </a>
+`;
+
 const executivePage = `
-  <section class="page executive-page">
+  <section id="page-1" class="page executive-page">
     <div class="brand-line"></div>
     <header class="executive-header">
       <div>
@@ -682,9 +704,11 @@ const executivePage = `
         <p>Decisão executiva baseada em riscos e evidências reais</p>
       </div>
       <div class="report-meta">
-        <b>Commit ${escapeHtml(commit)}</b>
-        <span>EverShop 2.2.1</span>
-        <span>${escapeHtml(startedAt.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }))}</span>
+        <a href="https://github.com/carlosesmoreira07/quality-engineering-lab/pull/20" class="pr-link" target="_blank">
+          <b>Pull Request #20 · QEL-11</b>
+        </a>
+        <span class="meta-label">Validação executiva da mudança · EverShop 2.2.1</span>
+        <span class="meta-date">${escapeHtml(startedAt.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }))}</span>
       </div>
     </header>
 
@@ -697,19 +721,19 @@ const executivePage = `
       <div class="metric-grid">
         <article>
           <b>${passed}/${total}</b>
-          <span>testes aprovados</span>
+          <span>Testes aprovados</span>
         </article>
         <article>
           <b>${riskIds.length}</b>
-          <span>riscos exercitados</span>
+          <span>Riscos exercitados</span>
         </article>
         <article>
           <b>${evidenceCount}</b>
-          <span>evidências úteis</span>
+          <span>Evidências úteis</span>
         </article>
         <article>
           <b>${formatDuration(totalDuration)}</b>
-          <span>duração observada</span>
+          <span>Duração observada</span>
         </article>
       </div>
     </div>
@@ -718,45 +742,49 @@ const executivePage = `
       <article>
         <h3>Funcional e regressivo</h3>
         <strong>${suiteStatus.functional.passed}/${suiteStatus.functional.total}</strong>
-        <p>jornadas e regras de compra aprovadas</p>
+        <p>Jornadas e regras de compra aprovadas</p>
       </article>
       <article>
         <h3>Segurança e acessos</h3>
         <strong>${suiteStatus.security.passed}/${suiteStatus.security.total}</strong>
-        <p>fronteiras de autorização blindadas</p>
+        <p>Fronteiras de autorização blindadas</p>
       </article>
       <article>
         <h3>Performance operacional</h3>
-        <strong>${suiteStatus.performance.p95}</strong>
-        <p>tempo de resposta no percentil 95</p>
+        <strong>95% em até ${suiteStatus.performance.p95}</strong>
+        <p>Tempo de resposta observado sob carga</p>
       </article>
     </div>
 
-    <div class="executive-decision">
-      <article>
-        <h2>Sinal para decisão</h2>
-        <p>${allApproved ? 'A versão avaliada manteve-se íntegra nos comportamentos críticos, fronteiras de acesso e patamares de resposta observados.' : 'A versão necessita de correção antes de avançar para ambientes produtivos.'}</p>
-      </article>
-      <article>
-        <h2>Estrutura do relatório</h2>
-        <p>As próximas páginas trazem a visão de cobertura, seguida por 1 página executiva para cada teste com sua prova legível a 100%, concluindo com a síntese e o modelo de proteção da mudança.</p>
-      </article>
-    </div>
+    <section class="coverage-section">
+      <div class="coverage-header">
+        <h2>Cobertura orientada a riscos de negócio</h2>
+        <span class="coverage-hint">Selecione qualquer controle para navegar diretamente à sua evidência e decisão</span>
+      </div>
+      <div class="coverage-grid">
+        ${coverageCards}
+        ${perfCoverageCard}
+      </div>
+    </section>
 
-    ${footer(pageNumber++, totalPages, 'Visão executiva para Produto, Tecnologia e Liderança')}
+    ${footer(pageNumber++, totalPages, 'Visão executiva para Produto, Tecnologia e Liderança · Clique nos riscos para navegar')}
   </section>
 `;
 
-const overviewMarkup = overviewPage(suiteStatus, riskIds, pageNumber++, totalPages);
-
 const detailPages = [];
-for (const item of testsWithEvidence) {
-  const suiteTests = suiteKey(item.test) === 'functional' ? functionalTests : securityTests;
-  detailPages.push(testPage(item, pageNumber++, totalPages, suiteTests.indexOf(item.test) + 1, suiteTests.length));
+let globalTestIndex = 1;
+
+// 1. Renderiza casos Funcionais (Web primeiro, depois API)
+for (const item of functionalTests) {
+  detailPages.push(testPage(item, pageNumber++, totalPages, functionalTests.indexOf(item) + 1, functionalTests.length, globalTestIndex++));
+}
+
+// 2. Renderiza casos de Segurança (Web primeiro, depois API)
+for (const item of securityTests) {
+  detailPages.push(testPage(item, pageNumber++, totalPages, securityTests.indexOf(item) + 1, securityTests.length, globalTestIndex++));
 }
 
 const performanceMarkup = performancePage(performance, pageNumber++, totalPages);
-const conclusionMarkup = conclusionPage(suiteStatus, allApproved, evidenceCount, pageNumber++, totalPages);
 const timelineMarkup = timelinePage(suiteStatus, pageNumber++, totalPages);
 
 const html = `<!doctype html>
@@ -796,6 +824,8 @@ const html = `<!doctype html>
       -webkit-font-smoothing: antialiased;
     }
 
+    a { text-decoration: none; color: inherit; }
+
     .page {
       width: 297mm;
       height: 210mm;
@@ -807,14 +837,14 @@ const html = `<!doctype html>
     }
     .page:last-child { break-after: auto; }
 
-    h1 { margin: 2mm 0 3mm; font-size: 19pt; line-height: 1.2; font-weight: 750; }
-    h2 { font-size: 15pt; line-height: 1.25; margin: 0 0 2mm; }
-    h3 { font-size: 13pt; line-height: 1.3; margin: 0 0 2mm; }
-    h4, .label { font-size: 11pt; line-height: 1.35; margin: 0; }
+    h1 { margin: 2mm 0 3mm; font-size: 18pt; line-height: 1.2; font-weight: 750; }
+    h2 { font-size: 14pt; line-height: 1.25; margin: 0 0 2mm; }
+    h3 { font-size: 12pt; line-height: 1.3; margin: 0 0 1.5mm; }
+    h4, .label { font-size: 10.5pt; line-height: 1.35; margin: 0; }
     p { margin: 0; }
 
-    header > span, .section-header > div > span {
-      font-size: 12pt;
+    header > span, .section-header .suite-name {
+      font-size: 11pt;
       font-weight: 750;
       letter-spacing: .05em;
       text-transform: uppercase;
@@ -832,12 +862,12 @@ const html = `<!doctype html>
       padding-top: 1.5mm;
       border-top: 1px solid currentColor;
       opacity: .75;
-      font-size: 9pt;
+      font-size: 8.5pt;
       line-height: 1.2;
     }
 
-    /* Temas Escuros (Capa, Overview, Conclusão, Timeline) */
-    .executive-page, .overview-page, .conclusion-page, .timeline-page {
+    /* Temas Escuros (Capa e Timeline) */
+    .executive-page, .timeline-page {
       color: var(--ink);
       background: var(--canvas);
     }
@@ -846,96 +876,128 @@ const html = `<!doctype html>
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 5mm;
+      margin-bottom: 4mm;
     }
-    .executive-header span, .overview-page header span, .conclusion-page header span, .timeline-page header span {
+    .executive-header span, .timeline-page header span {
       color: var(--mint);
     }
-    .executive-header h1 { margin: 1mm 0; font-size: 24pt; }
-    .executive-header p, .overview-page header p, .conclusion-page header p, .timeline-page header p {
+    .executive-header h1 { margin: 1mm 0; font-size: 22pt; }
+    .executive-header p, .timeline-page header p {
       color: var(--muted);
-      font-size: 11pt;
+      font-size: 10.5pt;
     }
     .report-meta {
       display: grid;
       gap: 1mm;
       text-align: right;
-      color: var(--muted);
-      font-size: 10pt;
+      font-size: 9.5pt;
       line-height: 1.3;
     }
-    .report-meta b { color: var(--ink); font-size: 11pt; }
+    .pr-link {
+      display: inline-block;
+      color: var(--mint);
+      font-size: 11pt;
+      font-weight: 700;
+      border-bottom: 1px dashed var(--mint);
+      padding-bottom: 0.5mm;
+    }
+    .meta-label { color: var(--ink); }
+    .meta-date { color: var(--muted); }
 
     .executive-summary {
       display: grid;
       grid-template-columns: 72mm 1fr;
-      gap: 3.5mm;
-      margin-bottom: 3.5mm;
+      gap: 3mm;
+      margin-bottom: 3mm;
     }
-    .gate-card, .metric-grid article, .suite-summary article, .executive-decision article {
+    .gate-card, .metric-grid article, .suite-summary article, .coverage-section {
       border: 1px solid var(--line);
-      border-radius: 2.5mm;
+      border-radius: 2mm;
       background: var(--surface);
     }
     .gate-card {
-      min-height: 44mm;
-      padding: 3.5mm;
+      min-height: 38mm;
+      padding: 3mm;
       border-left: 2.5mm solid var(--green);
     }
     .gate-card.fail { border-left-color: var(--red); }
-    .gate-card h3 { margin: 0; color: var(--muted); font-size: 12pt; }
-    .gate-card strong { display: block; margin: 1.5mm 0; color: var(--ink); font-size: 22pt; line-height: 1; }
-    .gate-card p { color: var(--muted); font-size: 10pt; }
+    .gate-card h3 { margin: 0; color: var(--muted); font-size: 11pt; }
+    .gate-card strong { display: block; margin: 1mm 0; color: var(--ink); font-size: 20pt; line-height: 1; }
+    .gate-card p { color: var(--muted); font-size: 9.5pt; }
 
     .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2.5mm; }
     .metric-grid article {
-      min-height: 44mm;
-      padding: 3mm;
+      min-height: 38mm;
+      padding: 2.5mm;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       text-align: center;
     }
-    .metric-grid b { font-size: 20pt; line-height: 1; }
-    .metric-grid span { margin-top: 1.5mm; color: var(--muted); font-size: 10pt; }
+    .metric-grid b { font-size: 18pt; line-height: 1; }
+    .metric-grid span { margin-top: 1.5mm; color: var(--muted); font-size: 9.5pt; }
 
-    .suite-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5mm; margin-bottom: 3.5mm; }
-    .suite-summary article { min-height: 32mm; padding: 3mm; }
-    .suite-summary h3 { margin: 0 0 1mm; color: var(--mint); font-size: 12pt; }
-    .suite-summary strong { font-size: 18pt; }
-    .suite-summary p { color: var(--muted); font-size: 10pt; }
+    .suite-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5mm; margin-bottom: 3mm; }
+    .suite-summary article { min-height: 28mm; padding: 2.5mm 3mm; }
+    .suite-summary h3 { margin: 0 0 1mm; color: var(--mint); font-size: 11pt; }
+    .suite-summary strong { font-size: 15pt; line-height: 1.2; display: block; margin-bottom: 0.5mm; }
+    .suite-summary p { color: var(--muted); font-size: 9.5pt; }
 
-    .executive-decision { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5mm; }
-    .executive-decision article { min-height: 36mm; padding: 3.5mm; }
-    .executive-decision h2 { margin: 0 0 1.5mm; color: var(--mint); font-size: 14pt; }
-    .executive-decision p { color: var(--muted); font-size: 10.5pt; line-height: 1.4; }
-
-    /* Overview Page */
-    .overview-page .lead, .conclusion-page .lead, .timeline-page .lead { color: var(--muted); font-size: 11pt; margin-bottom: 4mm; }
-    .area-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3.5mm; margin-bottom: 4mm; }
-    .area-grid article { min-height: 52mm; padding: 4mm; border: 1px solid var(--line); border-radius: 2.5mm; background: var(--surface); }
-    .area-grid b { color: var(--mint); font-size: 12pt; }
-    .area-grid h2 { margin: 1.5mm 0; font-size: 14pt; }
-    .area-grid p { color: var(--muted); font-size: 10pt; line-height: 1.4; }
-    .area-grid strong { display: block; margin-top: 2.5mm; color: var(--mint); font-size: 11.5pt; }
-
-    .coverage { padding: 3.5mm; border: 1px solid var(--line); border-radius: 2.5mm; background: var(--surface-2); }
-    .coverage h2 { margin: 0 0 2.5mm; font-size: 13pt; }
-    .coverage > div { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2mm; }
-
-    .risk-pill {
-      display: inline-grid;
-      gap: 0.5mm;
-      padding: 1.5mm 2.5mm;
-      border-radius: 1.5mm;
-      color: #185c35;
-      background: #e4f5e9;
+    /* Cobertura Interativa na Página 1 */
+    .coverage-section {
+      padding: 3mm;
+      background: var(--surface-2);
     }
-    .risk-pill strong { font-size: 10.5pt; line-height: 1.25; }
-    .risk-pill small { color: #4e5d53; font-size: 8.5pt; line-height: 1.2; }
-    .overview-page .risk-pill { color: var(--ink); background: #1d2921; }
-    .overview-page .risk-pill strong { color: var(--mint); font-size: 10pt; }
+    .coverage-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 2.5mm;
+    }
+    .coverage-header h2 { margin: 0; font-size: 12pt; color: var(--mint); }
+    .coverage-hint { font-size: 8.5pt; color: var(--muted); }
+    .coverage-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2mm;
+    }
+    .cov-item {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 2mm 2.5mm;
+      border: 1px solid var(--line);
+      border-radius: 1.5mm;
+      background: #111a14;
+      min-height: 20mm;
+      transition: all .15s ease;
+    }
+    .cov-item:hover {
+      border-color: var(--mint);
+      background: #16241c;
+    }
+    .cov-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1mm;
+    }
+    .cov-tag {
+      font-size: 7.5pt;
+      font-weight: 750;
+      text-transform: uppercase;
+      padding: 0.5mm 1.5mm;
+      border-radius: 1mm;
+      letter-spacing: .03em;
+    }
+    .cov-tag.web { color: #145c32; background: #c8ecd4; }
+    .cov-tag.api { color: #1d4d7a; background: #cee3f8; }
+    .cov-tag.sec { color: #7a4e09; background: #fae4be; }
+    .cov-tag.perf { color: #512b80; background: #e8d7fb; }
+    .cov-risk { font-size: 7.5pt; color: var(--muted); }
+    .cov-name { font-size: 8.5pt; line-height: 1.25; color: var(--ink); margin-bottom: 1mm; }
+    .cov-action { font-size: 7.5pt; color: var(--mint); font-weight: 600; text-align: right; }
 
     /* Páginas de Detalhes dos Casos (1 TESTE = 1 PÁGINA) */
     .detail-page:before {
@@ -956,29 +1018,93 @@ const html = `<!doctype html>
       align-items: flex-start;
       margin-bottom: 2mm;
     }
-    .section-header > div > span { color: #247647; font-size: 11pt; }
-    .security .section-header > div > span { color: #8a5d12; }
-    .performance .section-header > div > span { color: var(--blue); }
-    .section-header p { color: var(--paper-muted); font-size: 9.5pt; }
+    .header-left .suite-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 2.5mm;
+    }
+    .section-header .suite-name { color: #247647; font-size: 11pt; }
+    .security .section-header .suite-name { color: #8a5d12; }
+    .performance .section-header .suite-name { color: var(--blue); }
+    .case-counter { color: var(--paper-muted); font-size: 9pt; margin-top: 0.5mm; }
+
+    .modality-tag {
+      font-size: 8pt;
+      font-weight: 750;
+      text-transform: uppercase;
+      padding: 0.5mm 2mm;
+      border-radius: 1mm;
+      letter-spacing: .04em;
+    }
+    .modality-tag.web { color: #145c32; background: #daf2e1; }
+    .modality-tag.api { color: #1d4d7a; background: #d7e8fa; }
+    .modality-tag.perf { color: #244b7a; background: #e0ecfa; }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 3mm;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      font-size: 8.5pt;
+      font-weight: 600;
+      color: #247647;
+      background: #e8f5ec;
+      padding: 1.5mm 3mm;
+      border-radius: 1.2mm;
+      border: 1px solid #bfe0ca;
+      transition: all .15s ease;
+    }
+    .security .back-link {
+      color: #8a5d12;
+      background: #fdf5e8;
+      border-color: #ebd3ab;
+    }
+    .performance .back-link {
+      color: #244b7a;
+      background: #edf4fc;
+      border-color: #c7dcf5;
+    }
+    .timeline-header .back-link {
+      color: var(--mint);
+      background: #15241b;
+      border-color: var(--line);
+    }
 
     .status {
-      min-width: 36mm;
+      min-width: 32mm;
       padding: 1.5mm 3mm;
       border-radius: 1.5mm;
       text-align: center;
     }
     .status.pass { color: #145c32; background: #dff2e5; }
     .status.fail { color: #751f19; background: #f9ddd9; }
-    .status b { display: block; font-size: 11pt; }
-    .status small { display: block; font-size: 8.5pt; }
+    .status b { display: block; font-size: 10.5pt; }
+    .status small { display: block; font-size: 8pt; }
 
-    .detail-page > h1 { margin: 1mm 0 2mm; font-size: 17pt; max-width: 235mm; }
+    .detail-page > h1 { margin: 1mm 0 2mm; font-size: 16.5pt; max-width: 235mm; }
     .detail-page .risk-pills { display: flex; gap: 1.5mm; flex-wrap: wrap; margin-bottom: 2.5mm; }
 
-    /* Case Grid: 2 Columns (Sidebar 84mm + Evidence 183mm) */
+    .risk-pill {
+      display: inline-grid;
+      gap: 0.5mm;
+      padding: 1.5mm 2.5mm;
+      border-radius: 1.5mm;
+      color: #185c35;
+      background: #e4f5e9;
+    }
+    .risk-pill strong { font-size: 10pt; line-height: 1.25; }
+    .risk-pill small { color: #4e5d53; font-size: 8pt; line-height: 1.2; }
+    .security .risk-pill { color: #784d08; background: #faecd5; }
+    .performance .risk-pill { color: #1c4b7d; background: #e3effd; }
+
+    /* Case Grid: 2 Colunas (Sidebar 82mm + Evidence 185mm) */
     .case-grid {
       display: grid;
-      grid-template-columns: 84mm 1fr;
+      grid-template-columns: 82mm 1fr;
       gap: 3.5mm;
       align-items: stretch;
     }
@@ -998,13 +1124,13 @@ const html = `<!doctype html>
     .case-card h3 {
       margin: 0 0 1.5mm;
       color: #247647;
-      font-size: 11pt;
+      font-size: 10.5pt;
       font-weight: 750;
     }
     .security .case-card h3 { color: #8a5d12; }
 
-    .risk-card p { font-size: 9.5pt; line-height: 1.35; color: var(--paper-text); }
-    .control-card .intent-text { font-size: 9.5pt; line-height: 1.35; margin-bottom: 2mm; }
+    .risk-text { font-size: 9.5pt; line-height: 1.35; color: var(--paper-text); }
+    .control-card .intent-text { font-size: 9.5pt; line-height: 1.35; margin-bottom: 1.5mm; }
     .validation-bullets {
       margin: 0;
       padding-left: 4.5mm;
@@ -1012,14 +1138,16 @@ const html = `<!doctype html>
       line-height: 1.35;
       color: var(--paper-muted);
     }
-    .validation-bullets li { margin-bottom: 1mm; }
+    .validation-bullets li { margin-bottom: 0.8mm; }
 
     .decision-card {
       border-left: 2mm solid var(--green);
       background: #f7faf8;
     }
+    .security .decision-card { border-left-color: var(--amber); background: #fdfbf7; }
     .decision-card.fail { border-left-color: var(--red); background: #fff8f7; }
     .decision-card p { font-size: 9.5pt; line-height: 1.35; font-weight: 550; color: #164f30; }
+    .security .decision-card p { color: #6d4304; }
     .decision-card.fail p { color: #751f19; }
 
     /* Evidence Box & Visuals */
@@ -1074,54 +1202,83 @@ const html = `<!doctype html>
       justify-content: stretch;
       align-items: stretch;
     }
-    .visual-proof.compact img {
-      max-height: 72mm;
-    }
-    .api-proof-compact {
-      width: 100%;
-      overflow: hidden;
-    }
+    .visual-proof.compact img { max-height: 72mm; }
+    .api-proof-compact { width: 100%; overflow: hidden; }
 
-    /* Pure API Evidence */
+    /* Layout para Testes Puros de API */
     .api-single {
-      padding: 3.5mm;
+      padding: 4mm;
       align-items: stretch;
       justify-content: flex-start;
     }
-    .api-proof-full { width: 100%; }
+    .api-proof-full {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      gap: 3.5mm;
+    }
+    .evidence-header-tag {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 2mm;
+      border-bottom: 1px solid var(--paper-line);
+    }
     .evidence-title {
       color: #247647;
-      font-size: 11pt;
+      font-size: 11.5pt;
       font-weight: 750;
       text-transform: uppercase;
-      margin-bottom: 2mm;
+      letter-spacing: .03em;
     }
     .security .evidence-title { color: #8a5d12; }
+    .modality-pill {
+      font-size: 8.5pt;
+      font-weight: 700;
+      color: #1d4d7a;
+      background: #dceaf7;
+      padding: 0.8mm 2.5mm;
+      border-radius: 1mm;
+    }
 
-    .operations-container { display: flex; flex-direction: column; gap: 2.5mm; width: 100%; }
+    .operations-container {
+      display: flex;
+      flex-direction: column;
+      gap: 3mm;
+      width: 100%;
+      flex: 1;
+      justify-content: flex-start;
+    }
     .operations-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(65mm, 1fr));
-      gap: 2.5mm;
+      grid-template-columns: repeat(auto-fit, minmax(80mm, 1fr));
+      gap: 3mm;
     }
     .op-card {
-      padding: 2.5mm;
+      padding: 3.5mm 4mm;
       border: 1px solid var(--paper-line);
-      border-radius: 1.5mm;
+      border-radius: 2mm;
       background: #f7faf8;
     }
-    .op-card h4 { color: #172019; font-size: 10pt; font-weight: 700; margin-bottom: 1.5mm; }
-    .op-actor { font-size: 8.5pt; color: var(--paper-muted); margin-bottom: 1mm; }
-    .op-row { font-size: 9pt; line-height: 1.35; margin-bottom: 1mm; }
+    .security .op-card { background: #fdfbf7; }
+    .op-card h4 { color: #172019; font-size: 11pt; font-weight: 700; margin-bottom: 1.5mm; }
+    .op-actor { font-size: 9pt; color: var(--paper-muted); margin-bottom: 2mm; }
+    .op-row { font-size: 9.5pt; line-height: 1.4; margin-bottom: 1.5mm; }
     .op-row.observed { color: #145c32; font-weight: 600; }
+    .security .op-row.observed { color: #784d08; }
+
     .tech-note {
-      padding: 2mm 3mm;
-      font-size: 9pt;
-      line-height: 1.3;
+      padding: 2.5mm 3.5mm;
+      font-size: 9.5pt;
+      line-height: 1.35;
       border-left: 2mm solid var(--green);
       background: #e4f5e9;
       border-radius: 1mm;
     }
+    .security .tech-note { border-left-color: var(--amber); background: #faf0de; }
+    .tech-note.decision { margin-top: 1mm; }
 
     .technical-evidence dl div {
       display: grid;
@@ -1134,6 +1291,7 @@ const html = `<!doctype html>
     .technical-evidence dt { font-weight: 700; color: var(--paper-muted); }
     .technical-evidence dd { margin: 0; }
     .result-highlight { color: #145c32; font-weight: 600; }
+    .security .result-highlight { color: #784d08; }
 
     /* Performance Page */
     .perf-story-grid {
@@ -1143,13 +1301,13 @@ const html = `<!doctype html>
       margin-bottom: 3mm;
     }
     .perf-story-card {
-      min-height: 38mm;
+      min-height: 36mm;
       padding: 3mm;
       border: 1px solid var(--paper-line);
       border-radius: 2mm;
       background: white;
     }
-    .perf-story-card h3 { margin: 0 0 1.5mm; color: var(--blue); font-size: 11pt; }
+    .perf-story-card h3 { margin: 0 0 1.5mm; color: var(--blue); font-size: 10.5pt; }
     .perf-story-card p { font-size: 9.5pt; line-height: 1.35; color: var(--paper-text); }
     .perf-story-card.decision { border-left: 2mm solid var(--green); }
 
@@ -1160,7 +1318,7 @@ const html = `<!doctype html>
       margin-bottom: 3mm;
     }
     .perf-metrics-strip article {
-      min-height: 34mm;
+      min-height: 36mm;
       padding: 2.5mm;
       display: flex;
       flex-direction: column;
@@ -1171,8 +1329,9 @@ const html = `<!doctype html>
       border-radius: 2mm;
       background: white;
     }
-    .perf-metrics-strip b { font-size: 16pt; line-height: 1.1; color: var(--paper-text); }
-    .perf-metrics-strip span { margin-top: 1.5mm; font-size: 9pt; color: var(--paper-muted); }
+    .metric-num { font-size: 20pt; line-height: 1; color: var(--paper-text); }
+    .metric-main { margin-top: 1.5mm; font-size: 9.5pt; font-weight: 700; color: var(--paper-text); }
+    .metric-desc { margin-top: 0.5mm; font-size: 8.5pt; color: var(--paper-muted); }
 
     .perf-verifications {
       padding: 3mm;
@@ -1180,7 +1339,7 @@ const html = `<!doctype html>
       border-radius: 2mm;
       background: white;
     }
-    .perf-verifications h2 { margin: 0 0 2mm; font-size: 12pt; color: var(--blue); }
+    .perf-verifications h2 { margin: 0 0 2mm; font-size: 11.5pt; color: var(--blue); }
     .perf-checks-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -1203,76 +1362,88 @@ const html = `<!doctype html>
     .check-result { color: #145c32; font-size: 9pt; }
     .perf-disclaimer { font-size: 8pt; color: var(--paper-muted); margin-top: 2mm; }
 
-    /* Conclusão */
-    .conclusion-grid {
+    /* Timeline Page Expandida em 4 Pilares */
+    .timeline-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 3.5mm;
+    }
+    .timeline-header h1 { margin: 1mm 0; font-size: 20pt; }
+
+    .timeline-pillars-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: 1fr 1.35fr 1fr 1fr;
       gap: 3mm;
-      margin: 4mm 0;
+      margin-bottom: 3.5mm;
     }
-    .conclusion-grid article {
-      min-height: 52mm;
-      padding: 3.5mm;
+    .pillar {
+      display: flex;
+      flex-direction: column;
+      gap: 2mm;
+    }
+    .pillar-title {
+      font-size: 9.5pt;
+      font-weight: 750;
+      color: var(--mint);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      padding-bottom: 1mm;
+      border-bottom: 1px solid var(--line);
+    }
+    .pillar-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 2mm;
+    }
+    .milestone-card {
+      padding: 2.5mm;
       border: 1px solid var(--line);
-      border-radius: 2.5mm;
-      background: var(--surface);
-    }
-    .conclusion-grid h2 { margin: 0; color: var(--mint); font-size: 13pt; }
-    .conclusion-grid strong { display: block; margin: 3mm 0; font-size: 20pt; }
-    .conclusion-grid p { color: var(--muted); font-size: 9.5pt; }
-
-    .final-decision {
-      padding: 4mm;
-      border: 1px solid var(--line);
-      border-left: 2.5mm solid var(--green);
-      border-radius: 2.5mm;
-      background: var(--surface-2);
-    }
-    .final-decision.fail { border-left-color: var(--red); }
-    .final-decision h2 { margin: 0 0 1.5mm; font-size: 15pt; }
-    .final-decision p { color: var(--muted); font-size: 10pt; }
-    .residual { margin-top: 3.5mm; color: var(--muted); font-size: 9pt; line-height: 1.35; }
-
-    /* Linha do Tempo (Timeline) */
-    .timeline-row { display: flex; align-items: stretch; gap: 1.5mm; }
-    .timeline-row.second { width: 220mm; margin: 0 auto; }
-    .timeline-row > i { align-self: center; color: var(--mint); font-size: 18pt; font-style: normal; }
-    .stage {
-      width: 58mm;
-      min-height: 44mm;
-      padding: 3mm;
-      border: 1px solid var(--line);
-      border-radius: 2mm;
-      background: var(--surface);
-    }
-    .stage > b { color: var(--mint); font-size: 11pt; }
-    .stage h3 { margin: 1.5mm 0; color: var(--ink); font-size: 12pt; }
-    .stage p { color: var(--muted); font-size: 9.5pt; line-height: 1.35; }
-    .stage.pass { border-top: 2mm solid var(--green); }
-    .stage.fail { border-top: 2mm solid var(--red); }
-    .timeline-turn { height: 6mm; color: var(--mint); font-size: 18pt; line-height: 6mm; text-align: right; padding-right: 32mm; }
-
-    .blocking-rule {
-      margin-top: 4mm;
-      padding: 3.5mm 4mm;
-      display: grid;
-      grid-template-columns: 46mm 1fr;
-      gap: 3mm;
-      align-items: center;
-      border-left: 2mm solid var(--amber);
-      background: var(--surface-2);
       border-radius: 1.5mm;
+      background: var(--surface);
+      min-height: 22mm;
     }
-    .blocking-rule h2 { margin: 0; color: var(--amber); font-size: 12pt; }
-    .blocking-rule p { color: var(--muted); font-size: 9.5pt; margin: 0; }
+    .milestone-card.pass { border-left: 2mm solid var(--green); }
+    .milestone-card.fail { border-left: 2mm solid var(--red); }
+    .ms-header {
+      display: flex;
+      align-items: center;
+      gap: 1.5mm;
+      margin-bottom: 1mm;
+    }
+    .ms-num { color: var(--mint); font-size: 9.5pt; }
+    .milestone-card h4 { font-size: 9.5pt; color: var(--ink); font-weight: 700; }
+    .milestone-card p { font-size: 8.5pt; line-height: 1.3; color: var(--muted); }
+
+    .timeline-footer-strip {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 3mm;
+    }
+    .ai-banner, .gate-banner {
+      padding: 2.5mm 3.5mm;
+      border-radius: 1.5mm;
+      font-size: 8.5pt;
+      line-height: 1.35;
+    }
+    .ai-banner {
+      border: 1px solid #284433;
+      background: #112017;
+      color: var(--muted);
+    }
+    .ai-banner b { color: var(--mint); display: block; margin-bottom: 0.5mm; }
+    .gate-banner {
+      border: 1px solid #543f16;
+      background: #231b0c;
+      color: #dfcaa7;
+    }
+    .gate-banner b { color: var(--amber); display: block; margin-bottom: 0.5mm; }
   </style>
 </head>
 <body>
   ${executivePage}
-  ${overviewMarkup}
   ${detailPages.join('')}
   ${performanceMarkup}
-  ${conclusionMarkup}
   ${timelineMarkup}
 </body>
 </html>`;
