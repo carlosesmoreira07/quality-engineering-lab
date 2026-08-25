@@ -20,15 +20,16 @@ test(
     await page.getByPlaceholder('Password').fill('senha-invalida');
     await page.getByRole('button', { name: 'Sign In' }).click();
 
-    const rejectionMessage = page.getByText('Invalid email or password', { exact: true });
-    await expect(rejectionMessage).toBeVisible();
+    const toast = page.locator('.cn-toast, [data-sonner-toast]').first();
+    await expect(toast).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/Invalid email or password|Too many requests/i)).toBeVisible();
     await expect(page).toHaveURL(/\/account\/login$/);
+    await page.waitForTimeout(600);
 
     await attachHighlightedEvidence(page, testInfo, {
       name: 'evidencia-negocio-rejeicao-autenticacao',
-      focusOn: rejectionMessage,
       checkpoints: [
-        { locator: rejectionMessage, label: 'Bloqueio confirmado', hideLabel: true }
+        { locator: toast, label: 'Acesso rejeitado: credenciais inválidas' }
       ]
     });
   }

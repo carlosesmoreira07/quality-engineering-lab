@@ -36,11 +36,12 @@ export async function attachHighlightedEvidence(
     const box = await checkpoint.locator.boundingBox();
     if (!box) throw new Error(`Checkpoint sem área visível: ${checkpoint.label}`);
 
-    const padding = 6;
-    const left = Math.max(2, box.x - padding);
-    const top = Math.max(2, box.y - padding);
-    const right = Math.min(viewport.width - 2, box.x + box.width + padding);
-    const bottom = Math.min(viewport.height - 2, box.y + box.height + padding);
+    const paddingX = 12;
+    const paddingY = 8;
+    const left = Math.max(4, box.x - paddingX);
+    const top = Math.max(4, box.y - paddingY);
+    const right = Math.min(viewport.width - 4, box.x + box.width + paddingX);
+    const bottom = Math.min(viewport.height - 4, box.y + box.height + paddingY);
     rectangles.push({
       label: checkpoint.label,
       hideLabel: checkpoint.hideLabel,
@@ -48,7 +49,7 @@ export async function attachHighlightedEvidence(
       top,
       width: Math.max(1, right - left),
       height: Math.max(1, bottom - top),
-      labelPosition: top >= 38 ? 'above' : bottom <= viewport.height - 38 ? 'below' : 'outside'
+      labelPosition: top >= 42 ? 'above' : bottom <= viewport.height - 42 ? 'below' : 'outside'
     });
   }
 
@@ -102,7 +103,7 @@ export async function attachHighlightedEvidence(
         .checkpoint span {
           position: absolute;
           left: -2px;
-          max-width: 260px;
+          max-width: 280px;
           padding: 5px 8px;
           color: #07110b;
           border: 1px solid;
