@@ -4,27 +4,26 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark" />
-  <meta name="description" content="Portal executivo de evidências determinísticas, rastreabilidade e decisões de release do Quality Engineering Lab." />
-  <title>Portal de Evidências de Qualidade — Moreira Tech</title>
+  <meta name="description" content="Resultados, evidências e decisões de qualidade gerados automaticamente para o EverShop 2.2.1." />
+  <title>Central de Evidências de Qualidade — Moreira Tech</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
   
-    <header class="site-header" role="banner">
+    <header class="site-header" role="banner" id="top">
       <div class="header-inner">
-        <a class="brand" href="./index.html" aria-label="Moreira Tech — Central de Evidências de Qualidade">
+        <a class="brand" href="index.html" aria-label="Moreira Tech — Central de Evidências de Qualidade">
           <span class="brand-mark" aria-hidden="true">M</span>
           <span class="brand-text">
             <strong>Moreira Tech</strong>
             <small>Central de Evidências</small>
           </span>
         </a>
-        <nav class="site-nav" role="navigation" aria-label="Navegação do Hub">
-          <a class="nav-link active" href="./index.html">Início</a>
-          <a class="nav-link " href="./latest/index.html">Última Execução</a>
-          <a class="nav-link " href="./runs/index.html">Histórico (7 dias)</a>
+        <nav class="site-nav" role="navigation" aria-label="Navegação da Central de Evidências">
+          <a class="nav-link active" href="index.html">Início</a>
+          <a class="nav-link" href="#historico">Execuções recentes</a>
           <a class="nav-link external" href="https://github.com/carlosesmoreira07/quality-engineering-lab" target="_blank" rel="noopener noreferrer">
             GitHub <span aria-hidden="true">↗</span>
           </a>
@@ -39,13 +38,13 @@
         <span class="live-pulse" aria-hidden="true"></span>
         <span>Visão Executiva</span>
       </div>
-      <h1 class="hub-title">Portal de <em>Evidências de Qualidade</em></h1>
+      <h1 class="hub-title">Central de <em>Evidências de Qualidade</em></h1>
       <p class="hub-subtitle">
-        Evidências determinísticas, relatórios executivos e histórico auditável de qualidade gerados continuamente para o EverShop 2.2.1.
+        Resultados, evidências e decisões de qualidade gerados automaticamente.
       </p>
     </div>
 
-    <!-- Destaque: ÚLTIMA EXECUÇÃO -->
+    <!-- Destaque: ÚLTIMA EXECUÇÃO OFICIAL -->
     <section class="featured-run-card pass" aria-label="Última Execução de Qualidade">
       <div class="run-card-header">
         <div class="run-badge-group">
@@ -53,12 +52,12 @@
             QUALITY GATE: APROVADO
           </span>
           <span class="run-origin-tag">
-            Execução Local · EverShop 2.2.1
+            Validação Noturna · Run #1
           </span>
         </div>
         <div class="run-time-meta">
-          <strong>24/08/2026, 21:49:05</strong>
-          <span>Branch: main (local)</span>
+          <strong>25/08/2026, 04:08:49</strong>
+          <span>Branch: main (e3e5bd5)</span>
         </div>
       </div>
 
@@ -70,19 +69,19 @@
         <span>100% no escopo</span>
       </div>
       <div class="metric-box">
-        <small>Evidências Úteis</small>
+        <small>Evidências visuais e técnicas</small>
         <strong>13</strong>
         <span>Capturas &amp; Contratos</span>
       </div>
       <div class="metric-box">
         <small>Duração Total</small>
-        <strong>40.3 s</strong>
+        <strong>30.6 s</strong>
         <span>Ambiente isolado</span>
       </div>
       <div class="metric-box">
-        <small>Latência p95</small>
-        <strong>213 ms</strong>
-        <span>Descoberta sob carga</span>
+        <small>Tempo de resposta</small>
+        <strong>55 ms</strong>
+        <span>95% das respostas em até 55 ms</span>
       </div>
     </div>
   
@@ -109,24 +108,24 @@
           <span class="psc-title">Performance Operacional</span>
           <span class="psc-status">0.0% erros</span>
         </div>
-        <p>95% das respostas em até 213 ms na jornada de descoberta de produto sem indisponibilidade.</p>
+        <p>95% das respostas em até 55 ms na jornada de descoberta de produto sem indisponibilidade.</p>
       </div>
     </div>
   
 
       <div class="run-actions">
-        <button class="button primary" data-open-pdf data-pdf-url="latest/quality-report-latest.pdf" data-pdf-title="Quality Report — Última Execução (24/08/2026, 21:49:05)" type="button">
+        <button class="button primary" data-open-pdf data-pdf-url="runs/32820074767/pdf/quality-report_2026-08-25T0709Z_run-32820074767.pdf" data-pdf-title="Quality Report — Última Execução (25/08/2026, 04:08:49)" type="button">
           
-  <svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <svg class="icon-inline" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
     <circle cx="12" cy="12" r="3"></circle>
   </svg>
 
           <span>Visualizar Relatório</span>
         </button>
-        <a class="button secondary" href="latest/quality-report-latest.pdf" download>
+        <a class="button secondary" href="runs/32820074767/pdf/quality-report_2026-08-25T0709Z_run-32820074767.pdf" download>
           
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <svg class="icon-inline" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
     <polyline points="7 10 12 15 17 10"></polyline>
     <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -134,25 +133,26 @@
 
           <span>Baixar PDF</span>
         </a>
-        <a class="button secondary" href="latest/index.html">
-          Ver Detalhes da Execução →
+        <a class="button secondary" href="runs/32820074767/playwright-report/index.html" target="_blank" rel="noopener noreferrer">
+          Detalhes ↗
         </a>
-        <a class="button ghost" href="https://github.com/carlosesmoreira07/quality-engineering-lab" target="_blank" rel="noopener noreferrer">
+        <a class="button ghost" href="https://github.com/carlosesmoreira07/quality-engineering-lab/actions/runs/32820074767" target="_blank" rel="noopener noreferrer">
           Ver no GitHub Actions ↗
         </a>
       </div>
     </section>
 
-    <!-- Histórico: Últimos 7 dias -->
-    <section class="history-section" id="historico" aria-label="Execuções dos últimos 7 dias">
+    <!-- Execuções Recentes (Janela de até 7 dias) -->
+    <section class="history-section" id="historico" aria-label="Execuções recentes">
       <div class="section-header-row">
         <div>
-          <h2 class="section-title">Execuções dos últimos 7 dias</h2>
-          <p class="section-desc">Janela deslizante semanal mantida automaticamente pelos workflows de validação.</p>
+          <h2 class="section-title">Execuções recentes</h2>
+          <p class="section-desc">Janela deslizante de até 7 dias mantida automaticamente pelos workflows de validação.</p>
         </div>
-        <span class="history-window-tag">Janela de 7 dias (6 execuções)</span>
+        <span class="history-window-tag">Janela de 7 dias (1 execução)</span>
       </div>
 
+      <!-- VISÃO DESKTOP: Tabela estruturada -->
       <div class="runs-table-container">
         <table class="runs-table">
           <thead>
@@ -172,10 +172,10 @@
                 <td class="cell-run-id">
                   <strong>#Mais Recente</strong>
                 </td>
-                <td class="cell-time">24/08/2026, 21:49:05</td>
+                <td class="cell-time">25/08/2026, 04:08:49</td>
                 <td>
-                  <a href="https://github.com/carlosesmoreira07/quality-engineering-lab" target="_blank" rel="noopener noreferrer">
-                    Execução Local · EverShop 2.2.1
+                  <a href="https://github.com/carlosesmoreira07/quality-engineering-lab/actions/runs/32820074767" target="_blank" rel="noopener noreferrer">
+                    Validação Noturna · Run #1
                   </a>
                 </td>
                 <td>
@@ -184,178 +184,77 @@
                   </span>
                 </td>
                 <td>10/10</td>
-                <td>40.3 s</td>
+                <td>30.6 s</td>
                 <td class="cell-actions">
-                  <button class="btn-table preview-btn" data-open-pdf data-pdf-url="latest/quality-report-latest.pdf" data-pdf-title="Quality Report — Execução #1 (24/08/2026, 21:49:05)" type="button" title="Visualizar relatório em PDF">
+                  <button class="btn-table preview-btn" data-open-pdf data-pdf-url="runs/32820074767/pdf/quality-report_2026-08-25T0709Z_run-32820074767.pdf" data-pdf-title="Quality Report — Execução #1 (25/08/2026, 04:08:49)" type="button" title="Visualizar relatório em PDF">
                     
-  <svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <svg class="icon-inline" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
     <circle cx="12" cy="12" r="3"></circle>
   </svg>
 
                     <span>Visualizar</span>
                   </button>
-                  <a class="btn-table view" href="latest/index.html">Detalhes →</a>
-                </td>
-              </tr>
-            
-              <tr>
-                <td class="cell-run-id">
-                  #20
-                </td>
-                <td class="cell-time">24/08/2026, 03:17:15</td>
-                <td>
-                  <a href="https://github.com/carlosesmoreira07/quality-engineering-lab/actions/runs/1782390145" target="_blank" rel="noopener noreferrer">
-                    Validação Noturna · Run #20
+                  <a class="btn-table view" href="runs/32820074767/playwright-report/index.html" target="_blank" rel="noopener noreferrer">
+                    Detalhes ↗
                   </a>
-                </td>
-                <td>
-                  <span class="cell-status-tag pass">
-                    APROVADO
-                  </span>
-                </td>
-                <td>10/10</td>
-                <td>36.1 s</td>
-                <td class="cell-actions">
-                  <button class="btn-table preview-btn" data-open-pdf data-pdf-url="runs/1782390145/quality-report-latest.pdf" data-pdf-title="Quality Report — Execução #20 (24/08/2026, 03:17:15)" type="button" title="Visualizar relatório em PDF">
-                    
-  <svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
-    <circle cx="12" cy="12" r="3"></circle>
-  </svg>
-
-                    <span>Visualizar</span>
-                  </button>
-                  <a class="btn-table view" href="runs/1782390145/index.html">Detalhes →</a>
-                </td>
-              </tr>
-            
-              <tr>
-                <td class="cell-run-id">
-                  #19
-                </td>
-                <td class="cell-time">23/08/2026, 03:17:22</td>
-                <td>
-                  <a href="https://github.com/carlosesmoreira07/quality-engineering-lab/actions/runs/1779841200" target="_blank" rel="noopener noreferrer">
-                    Validação Noturna · Run #19
-                  </a>
-                </td>
-                <td>
-                  <span class="cell-status-tag pass">
-                    APROVADO
-                  </span>
-                </td>
-                <td>10/10</td>
-                <td>38.2 s</td>
-                <td class="cell-actions">
-                  <button class="btn-table preview-btn" data-open-pdf data-pdf-url="runs/1779841200/quality-report-latest.pdf" data-pdf-title="Quality Report — Execução #19 (23/08/2026, 03:17:22)" type="button" title="Visualizar relatório em PDF">
-                    
-  <svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
-    <circle cx="12" cy="12" r="3"></circle>
-  </svg>
-
-                    <span>Visualizar</span>
-                  </button>
-                  <a class="btn-table view" href="runs/1779841200/index.html">Detalhes →</a>
-                </td>
-              </tr>
-            
-              <tr>
-                <td class="cell-run-id">
-                  #18
-                </td>
-                <td class="cell-time">22/08/2026, 03:17:10</td>
-                <td>
-                  <a href="https://github.com/carlosesmoreira07/quality-engineering-lab/actions/runs/1775198031" target="_blank" rel="noopener noreferrer">
-                    Validação Noturna · Run #18
-                  </a>
-                </td>
-                <td>
-                  <span class="cell-status-tag pass">
-                    APROVADO
-                  </span>
-                </td>
-                <td>10/10</td>
-                <td>35.9 s</td>
-                <td class="cell-actions">
-                  <button class="btn-table preview-btn" data-open-pdf data-pdf-url="runs/1775198031/quality-report-latest.pdf" data-pdf-title="Quality Report — Execução #18 (22/08/2026, 03:17:10)" type="button" title="Visualizar relatório em PDF">
-                    
-  <svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
-    <circle cx="12" cy="12" r="3"></circle>
-  </svg>
-
-                    <span>Visualizar</span>
-                  </button>
-                  <a class="btn-table view" href="runs/1775198031/index.html">Detalhes →</a>
-                </td>
-              </tr>
-            
-              <tr>
-                <td class="cell-run-id">
-                  #17
-                </td>
-                <td class="cell-time">21/08/2026, 03:17:05</td>
-                <td>
-                  <a href="https://github.com/carlosesmoreira07/quality-engineering-lab/actions/runs/1771029481" target="_blank" rel="noopener noreferrer">
-                    Validação Noturna · Run #17
-                  </a>
-                </td>
-                <td>
-                  <span class="cell-status-tag pass">
-                    APROVADO
-                  </span>
-                </td>
-                <td>10/10</td>
-                <td>37.8 s</td>
-                <td class="cell-actions">
-                  <button class="btn-table preview-btn" data-open-pdf data-pdf-url="runs/1771029481/quality-report-latest.pdf" data-pdf-title="Quality Report — Execução #17 (21/08/2026, 03:17:05)" type="button" title="Visualizar relatório em PDF">
-                    
-  <svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
-    <circle cx="12" cy="12" r="3"></circle>
-  </svg>
-
-                    <span>Visualizar</span>
-                  </button>
-                  <a class="btn-table view" href="runs/1771029481/index.html">Detalhes →</a>
-                </td>
-              </tr>
-            
-              <tr>
-                <td class="cell-run-id">
-                  #16
-                </td>
-                <td class="cell-time">20/08/2026, 03:17:30</td>
-                <td>
-                  <a href="https://github.com/carlosesmoreira07/quality-engineering-lab/actions/runs/1768491022" target="_blank" rel="noopener noreferrer">
-                    Validação Noturna · Run #16
-                  </a>
-                </td>
-                <td>
-                  <span class="cell-status-tag pass">
-                    APROVADO
-                  </span>
-                </td>
-                <td>10/10</td>
-                <td>39.1 s</td>
-                <td class="cell-actions">
-                  <button class="btn-table preview-btn" data-open-pdf data-pdf-url="runs/1768491022/quality-report-latest.pdf" data-pdf-title="Quality Report — Execução #16 (20/08/2026, 03:17:30)" type="button" title="Visualizar relatório em PDF">
-                    
-  <svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
-    <circle cx="12" cy="12" r="3"></circle>
-  </svg>
-
-                    <span>Visualizar</span>
-                  </button>
-                  <a class="btn-table view" href="runs/1768491022/index.html">Detalhes →</a>
                 </td>
               </tr>
             
           </tbody>
         </table>
+      </div>
+
+      <!-- VISÃO MOBILE: Cards Verticais Touch-Friendly (Sem Scroll Lateral) -->
+      <div class="runs-cards-list">
+        
+          <article class="run-history-card pass">
+            <div class="rhc-header">
+              <div class="rhc-identity">
+                <span class="rhc-id">#Mais Recente</span>
+                <span class="rhc-date">25/08/2026, 04:08:49</span>
+              </div>
+              <span class="gate-status-pill pass">
+                APROVADO
+              </span>
+            </div>
+
+            <div class="rhc-context">
+              <span class="rhc-context-label">Validação Noturna · Run #1</span>
+              <span class="rhc-branch">main (e3e5bd5)</span>
+            </div>
+
+            <div class="rhc-stats-grid">
+              <div class="rhc-stat-box">
+                <small>Testes</small>
+                <strong>10/10</strong>
+              </div>
+              <div class="rhc-stat-box">
+                <small>Duração</small>
+                <strong>30.6 s</strong>
+              </div>
+              <div class="rhc-stat-box">
+                <small>Tempo de resposta</small>
+                <strong>55 ms</strong>
+              </div>
+            </div>
+
+            <div class="rhc-actions">
+              <button class="button secondary full-width" data-open-pdf data-pdf-url="runs/32820074767/pdf/quality-report_2026-08-25T0709Z_run-32820074767.pdf" data-pdf-title="Quality Report — Execução #1 (25/08/2026, 04:08:49)" type="button">
+                
+  <svg class="icon-inline" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+    <circle cx="12" cy="12" r="3"></circle>
+  </svg>
+
+                <span>Visualizar PDF</span>
+              </button>
+              <a class="button primary full-width" href="runs/32820074767/playwright-report/index.html" target="_blank" rel="noopener noreferrer">
+                Detalhes ↗
+              </a>
+            </div>
+          </article>
+        
       </div>
     </section>
   </main>
@@ -365,13 +264,13 @@
       <div class="modal-window">
         <header class="modal-header">
           <div class="modal-header-info">
-            <span class="modal-tag">Visualização do Relatório</span>
+            <span class="modal-tag">Relatório Executivo</span>
             <h3 id="modal-title" class="modal-title">Quality Report — EverShop 2.2.1</h3>
           </div>
           <div class="modal-header-actions">
             <a id="modal-download-btn" class="button primary small" href="#" download>
               
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <svg class="icon-inline" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
     <polyline points="7 10 12 15 17 10"></polyline>
     <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -393,15 +292,27 @@
   
     <footer class="site-footer" role="contentinfo">
       <div class="footer-inner">
-        <div>
-          <strong>Quality Engineering Lab</strong> — Qualidade como Engenharia
+        <div class="footer-col-left">
+          <strong class="footer-qe-title">Quality Engineering Lab — Qualidade como Engenharia</strong>
           <p class="footer-ai-note">
-            <b>IA Consultiva:</b> Apoio na análise de impacto, modelagem e síntese executiva.<br>
-            Decisões, código e Quality Gates permanecem 100% sob controle e revisão humana.
+            <b>IA Consultiva:</b> para análise e síntese; decisões, código e Quality Gates sob revisão humana.
           </p>
         </div>
-        <div>
-          <span>© 2026 Moreira Tech · EverShop 2.2.1</span>
+        <div class="footer-col-right">
+          <div class="footer-meta-line">
+            <span>Carlos Moreira</span>
+            <span class="footer-sep" aria-hidden="true">·</span>
+            <a class="footer-link external" href="https://www.linkedin.com/in/carlos-moreira-qa-lead/" target="_blank" rel="noopener noreferrer">
+              LinkedIn <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+          <div class="footer-meta-line">
+            <span>© 2026 Moreira Tech</span>
+            <span class="footer-sep" aria-hidden="true">·</span>
+            <a class="footer-link external" href="https://demo.evershop.io/" target="_blank" rel="noopener noreferrer">
+              EverShop 2.2.1 <span aria-hidden="true">↗</span>
+            </a>
+          </div>
         </div>
       </div>
     </footer>
