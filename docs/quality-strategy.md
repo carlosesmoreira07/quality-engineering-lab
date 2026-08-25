@@ -129,3 +129,10 @@ A matriz deve ser revista quando ocorrer pelo menos uma destas situações:
 - preparação de um novo experimento controlado de regressão.
 
 Novos testes devem referenciar um risco existente ou justificar a inclusão de um novo ID na matriz. Mudanças de prioridade precisam registrar o motivo, mantendo a estratégia curta, rastreável e orientada ao produto.
+
+## 11. Segregação de Ambientes e Governança de Produção
+
+- **Ambiente Isolado (Nightly e CI):** A bateria completa de qualidade (testes funcionais Web, validação de contratos de API, fronteiras de segurança, regressão de performance e geração de relatórios executivos) é executada diariamente em ambiente hermético e reproduzível no CI, com Sistema Sob Teste (SUT) em containers dedicados e credenciais efêmeras.
+- **Ambiente de Produção:** **SOMENTE validações estritamente read-only** (como a suíte de smoke pós-implantação já existente). **É terminantemente proibido executar criação, alteração ou exclusão de dados em ambiente de produção.**
+- **Rastreabilidade dos Relatórios:** Cada execução de qualidade produz um artefato histórico imutável (`quality-report_<timestamp-ISO>_run-<github-run-id>.pdf`) e atualiza o ponteiro estável (`quality-report-latest.pdf`) publicado no Quality Evidence Hub.
+

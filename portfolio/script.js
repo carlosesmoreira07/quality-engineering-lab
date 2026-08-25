@@ -1,29 +1,91 @@
-const menuButton = document.querySelector('.menu-button');
-const navigation = document.querySelector('#site-nav');
-const dialog = document.querySelector('.evidence-dialog');
-const dialogImage = dialog.querySelector('img');
+// Portal de Evidências de Qualidade — Visualizador Interativo de Relatórios PDF
 
-menuButton.addEventListener('click', () => {
-  const isOpen = menuButton.getAttribute('aria-expanded') === 'true';
-  menuButton.setAttribute('aria-expanded', String(!isOpen));
-  navigation.classList.toggle('open', !isOpen);
-});
+document.addEventListener('DOMContentLoaded', () => {
+  const modal = document.getElementById('pdf-modal');
+  const modalFrame = document.getElementById('modal-pdf-frame');
+  const modalTitle = document.getElementById('modal-title');
+  const modalDownloadBtn = document.getElementById('modal-download-btn');
+  const modalCloseBtn = document.getElementById('modal-close-btn');
 
-navigation.addEventListener('click', (event) => {
-  if (!event.target.closest('a')) return;
-  navigation.classList.remove('open');
-  menuButton.setAttribute('aria-expanded', 'false');
-});
+  let lastActiveElement = null;
 
-document.querySelectorAll('[data-modal-src]').forEach((button) => {
-  button.addEventListener('click', () => {
-    dialogImage.src = button.dataset.modalSrc;
-    dialogImage.alt = button.dataset.modalAlt;
-    dialog.showModal();
+  function sanitizePdfUrl(rawUrl) {
+    if (!rawUrl) return null;
+
+    try {
+      const parsed = new URL(rawUrl, window.location.href);
+      const isHttp = parsed.protocol === 'http:' || parsed.protocol === 'https:';
+      const isPdf = parsed.pathname.toLowerCase().endsWith('.pdf');
+
+      if (!isHttp || !isPdf) return null;
+      return parsed.href;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function openPdfModal(pdfUrl, title) {
+    if (!modal || !modalFrame) return;
+
+    lastActiveElement = document.activeElement;
+    modalFrame.src = pdfUrl;
+    if (modalTitle) modalTitle.textContent = title || 'Quality Report — EverShop 2.2.1';
+    if (modalDownloadBtn) {
+      modalDownloadBtn.href = pdfUrl;
+      modalDownloadBtn.setAttribute('download', pdfUrl.split('/').pop() || 'quality-report.pdf');
+    }
+
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+
+    if (modalCloseBtn) {
+      modalCloseBtn.focus();
+    }
+  }
+
+  function closePdfModal() {
+    if (!modal || !modalFrame) return;
+
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+    modalFrame.src = '';
+    document.body.style.overflow = '';
+
+    if (lastActiveElement && typeof lastActiveElement.focus === 'function') {
+      lastActiveElement.focus();
+    }
+  }
+
+  // Delegar cliques para botões de abertura de modal
+  document.addEventListener('click', (event) => {
+    const trigger = event.target.closest('[data-open-pdf]');
+    if (!trigger) return;
+
+    event.preventDefault();
+    const rawPdfUrl = trigger.getAttribute('data-pdf-url') || trigger.getAttribute('href');
+    const pdfUrl = sanitizePdfUrl(rawPdfUrl);
+    const title = trigger.getAttribute('data-pdf-title') || 'Quality Report — EverShop 2.2.1';
+    if (pdfUrl) {
+      openPdfModal(pdfUrl, title);
+    }
   });
-});
 
-dialog.querySelector('.dialog-close').addEventListener('click', () => dialog.close());
-dialog.addEventListener('click', (event) => {
-  if (event.target === dialog) dialog.close();
+  if (modalCloseBtn) {
+    modalCloseBtn.addEventListener('click', closePdfModal);
+  }
+
+  if (modal) {
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) {
+        closePdfModal();
+      }
+    });
+  }
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && modal && modal.classList.contains('open')) {
+      closePdfModal();
+    }
+  });
 });

@@ -45,10 +45,10 @@ test(
       );
     }
 
-    const suffix = randomUUID();
-    const sku = `QEL4-${suffix}`;
-    const name = `QEL 4 Product ${suffix}`;
-    const urlKey = `qel-4-product-${suffix}`;
+    const suffix = randomUUID().slice(0, 8);
+    const sku = `THERMO-PREM-ESP-${suffix}`;
+    const name = 'Garrafa Térmica Inox Premium - Edição Especial';
+    const urlKey = `garrafa-termica-inox-premium-edicao-especial-${suffix}`;
     const initialPrice = 41.25;
     const updatedPrice = 42.5;
     let productId: string | undefined;
@@ -73,7 +73,8 @@ test(
           visibility: true,
           manage_stock: true,
           stock_availability: true,
-          no_shipping_required: true
+          no_shipping_required: true,
+          images: ['/assets/catalog/1287/3556/thermos-yellow.jpg']
         }
       });
       const createBody = (await createResponse.json()) as ProductResponse;
