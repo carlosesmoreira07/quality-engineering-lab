@@ -9,6 +9,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let lastActiveElement = null;
 
+  function sanitizePdfUrl(rawUrl) {
+    if (!rawUrl) return null;
+
+    try {
+      const parsed = new URL(rawUrl, window.location.href);
+      const isHttp = parsed.protocol === 'http:' || parsed.protocol === 'https:';
+      const isPdf = parsed.pathname.toLowerCase().endsWith('.pdf');
+
+      if (!isHttp || !isPdf) return null;
+      return parsed.href;
+    } catch (e) {
+      return null;
+    }
+  }
+
   function openPdfModal(pdfUrl, title) {
     if (!modal || !modalFrame) return;
 
@@ -48,9 +63,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!trigger) return;
 
     event.preventDefault();
-    const pdfUrl = trigger.getAttribute('data-pdf-url') || trigger.getAttribute('href');
+    const rawPdfUrl = trigger.getAttribute('data-pdf-url') || trigger.getAttribute('href');
+    const pdfUrl = sanitizePdfUrl(rawPdfUrl);
     const title = trigger.getAttribute('data-pdf-title') || 'Quality Report — EverShop 2.2.1';
-    if (pdfUrl && !pdfUrl.startsWith('#')) {
+    if (pdfUrl) {
       openPdfModal(pdfUrl, title);
     }
   });
