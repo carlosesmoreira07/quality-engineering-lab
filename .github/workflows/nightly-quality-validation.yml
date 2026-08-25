@@ -1,4 +1,4 @@
-name: Nightly Quality Validation
+name: Validação Noturna de Qualidade
 
 on:
   schedule:
@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   nightly-validation:
-    name: Nightly Quality Battery
+    name: Bateria Noturna de Qualidade
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -27,27 +27,27 @@ jobs:
       E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
 
     steps:
-      - name: Checkout main repository
+      - name: Checkout do repositório
         uses: actions/checkout@v6
         with:
           ref: main
 
-      - name: Setup Node.js
+      - name: Configuração do Node.js
         uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: npm
           cache-dependency-path: quality/package-lock.json
 
-      - name: Install quality dependencies
+      - name: Instalação de dependências de qualidade
         working-directory: quality
         run: npm ci
 
-      - name: Gate 1 — Build and type safety
+      - name: Gate 1 — Compilação e verificação de tipos
         working-directory: quality
         run: npm run typecheck
 
-      - name: Validate required secrets
+      - name: Validação de segredos obrigatórios
         shell: bash
         run: |
           if [[ -z "$E2E_ADMIN_EMAIL" || -z "$E2E_ADMIN_PASSWORD" ]]; then
@@ -55,39 +55,39 @@ jobs:
             exit 1
           fi
 
-      - name: Install Chromium
+      - name: Instalação do Chromium
         working-directory: quality
         run: npx playwright install --with-deps chromium
 
-      - name: Setup k6
+      - name: Configuração do k6
         uses: grafana/setup-k6-action@v1.2.1
         with:
           k6-version: 2.1.0
 
-      - name: Gate 2 — Start healthy SUT in isolated environment
+      - name: Gate 2 — Inicialização do SUT em ambiente isolado
         run: docker compose -f sut/docker-compose.yml up -d --wait --wait-timeout 300
 
-      - name: Create ephemeral CI administrator
+      - name: Criação de administrador efêmero de CI
         shell: bash
         run: >-
           docker compose -f sut/docker-compose.yml exec -T
           -e E2E_ADMIN_EMAIL -e E2E_ADMIN_PASSWORD evershop
           sh -c 'npm run user:create -- --email "$E2E_ADMIN_EMAIL" --password "$E2E_ADMIN_PASSWORD" --name "QEL Nightly Administrator"'
 
-      - name: Gate 3 — Functional, API and security automation
+      - name: Gate 3 — Automação funcional, API e segurança
         working-directory: quality
         run: npm test
 
-      - name: Gate 4 — Daily performance regression smoke
+      - name: Gate 4 — Validação rápida de regressão de performance
         working-directory: quality
         run: npm run performance:smoke
 
-      - name: Generate Quality Summary Report & Manifest
+      - name: Geração do relatório executivo e manifesto de qualidade
         if: ${{ !cancelled() && hashFiles('quality/test-results/results.json') != '' }}
         working-directory: quality
         run: npm run report:summary
 
-      - name: Gate 5 — Verify evidence outputs
+      - name: Gate 5 — Verificação dos artefatos de evidência
         if: ${{ success() }}
         shell: bash
         run: |
@@ -97,26 +97,26 @@ jobs:
           compgen -G 'output/pdf/quality-report_*.pdf' > /dev/null
           compgen -G 'quality/performance-smoke-*-summary.json' > /dev/null
 
-      - name: Build Quality Evidence Hub
+      - name: Compilação da Central de Evidências
         if: ${{ success() }}
         run: node portfolio/scripts/build.mjs
 
-      - name: Configure GitHub Pages
+      - name: Configuração do GitHub Pages
         if: ${{ success() }}
         uses: actions/configure-pages@v6
 
-      - name: Upload Pages artifact
+      - name: Upload do artefato do GitHub Pages
         if: ${{ success() }}
         uses: actions/upload-pages-artifact@v5
         with:
           path: portfolio/dist
 
-      - name: Deploy Quality Evidence Hub to GitHub Pages
+      - name: Publicação da Central de Evidências no GitHub Pages
         if: ${{ success() }}
         id: deployment
         uses: actions/deploy-pages@v5
 
-      - name: Publish nightly test evidence
+      - name: Publicação dos artefatos de evidência
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
@@ -131,6 +131,6 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-      - name: Cleanup SUT
+      - name: Encerramento do SUT
         if: ${{ always() }}
         run: docker compose -f sut/docker-compose.yml down --volumes --remove-orphans

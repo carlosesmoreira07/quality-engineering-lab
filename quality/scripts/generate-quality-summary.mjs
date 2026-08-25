@@ -45,7 +45,7 @@ function getContextMetadata(execMeta) {
 
   if (isNightly || (isCI && process.env.GITHUB_REF_NAME === 'main')) {
     return {
-      title: `Nightly Validation · Run #${execMeta.runNumber}`,
+      title: `Validação Noturna · Run #${execMeta.runNumber}`,
       url: `https://github.com/carlosesmoreira07/quality-engineering-lab/actions/runs/${execMeta.rawRunId}`,
       label: 'Validação contínua da branch main · EverShop 2.2.1'
     };

@@ -1,0 +1,46 @@
+{
+  "runId": "32820074767",
+  "runNumber": "1",
+  "timestamp": "2026-08-25T07:09:21.348Z",
+  "timestampFormatted": "25/08/2026, 04:08:49",
+  "status": "APROVADO",
+  "gatePassed": true,
+  "branch": "main",
+  "commit": "e3e5bd5",
+  "context": {
+    "title": "Nightly Validation · Run #1",
+    "url": "https://github.com/carlosesmoreira07/quality-engineering-lab/actions/runs/32820074767",
+    "label": "Validação contínua da branch main · EverShop 2.2.1"
+  },
+  "stats": {
+    "totalTests": 10,
+    "passedTests": 10,
+    "failedTests": 0,
+    "evidenceCount": 13,
+    "durationMs": 30593.996,
+    "durationFormatted": "30.6 s"
+  },
+  "suites": {
+    "functional": {
+      "total": 6,
+      "passed": 6,
+      "approved": true
+    },
+    "security": {
+      "total": 4,
+      "passed": 4,
+      "approved": true
+    },
+    "performance": {
+      "approved": true,
+      "p95": "55 ms",
+      "errorRate": "0.0%"
+    }
+  },
+  "files": {
+    "pdfReport": "quality-report_2026-08-25T0709Z_run-32820074767.pdf",
+    "pdfLatest": "quality-report-latest.pdf",
+    "pdfPath": "output/pdf/quality-report_2026-08-25T0709Z_run-32820074767.pdf",
+    "pdfLatestPath": "output/pdf/quality-report-latest.pdf"
+  }
+}
