@@ -4,7 +4,7 @@ O Sistema Sob Teste (SUT) deste laboratório é o [EverShop](https://github.com/
 
 O EverShop é software de terceiros, distribuído sob a licença [GNU GPL v3](https://github.com/evershopcommerce/evershop/blob/v2.2.1/LICENSE). Seu código-fonte não faz parte deste repositório.
 
-## Baseline
+## Versão de referência
 
 - EverShop: `2.2.1`
 - Imagem: `evershop/evershop:2.2.1@sha256:d0823576f91b621e07b1fd913b326f8f463374615dc5301fd67b951123dd6967`
@@ -52,7 +52,7 @@ docker compose down
 
 ## Reset completo
 
-Para remover containers, rede, banco e mídia locais e retornar à baseline:
+Para remover containers, rede, banco e mídia locais e retornar ao estado de referência:
 
 ```bash
 docker compose down --volumes --remove-orphans

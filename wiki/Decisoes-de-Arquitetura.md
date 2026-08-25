@@ -1,4 +1,4 @@
-# Decisões de Arquitetura
+
 
 As Architecture Decision Records (ADRs) registram contexto, decisão, alternativas e consequências. Na Wiki elas são apresentadas como **Decisões de Arquitetura**; os arquivos técnicos continuam versionados no repositório e são a fonte oficial dos detalhes.
 

@@ -1,6 +1,6 @@
 # Handoff técnico — Quality Engineering Lab
 
-> Estado verificado em 22 de agosto de 2026, a partir da `main` no commit `fc2aac9`. Este documento é contexto inicial para continuidade; as fontes indicadas abaixo prevalecem quando houver divergência.
+> Estado verificado em 25 de agosto de 2026, a partir da branch `feature/QEL-11-executive-report-refinement`, commit `584d34b`. Este documento é contexto inicial para continuidade; as fontes indicadas abaixo prevalecem quando houver divergência.
 
 ## 1. Visão geral
 
@@ -20,7 +20,7 @@ Capacidades entregues:
 - análise de impacto assistida por IA, sempre consultiva;
 - README de entrada e Wiki navegável versionada.
 
-O projeto está próximo da v1.0. Os cards QEL-1 a QEL-12, QEL-14, QEL-16 e QEL-17 estão concluídos; QEL-13 e QEL-15 permanecem pendentes.
+O projeto está próximo da v1.0. Os cards QEL-1 a QEL-17 estão concluídos (QEL-11 inclui o refinamento da Central de Evidências); QEL-13 permanece como evolução pós-v1.0. O QEL-15 (refinamento final de apresentação) é a próxima etapa.
 
 ## 2. Arquitetura
 
@@ -41,10 +41,10 @@ wiki/                  fonte versionada da Wiki oficial
 - **SUT:** `sut/docker-compose.yml` fixa EverShop `2.2.1` por versão e digest e PostgreSQL `16.10-alpine`. `sut/bootstrap.mjs` prepara seed e Home de forma idempotente. O código do EverShop não pertence ao repositório.
 - **Playwright/TypeScript:** Playwright Test `1.62.1`, TypeScript estrito, Chromium apenas, zero retry e `test.only` proibido. Page Objects existem somente para interações reutilizadas da Storefront; API usa `APIRequestContext` diretamente.
 - **Web/API:** testes são separados por interface e domínio. Fluxos transversais, como Administração → Storefront, combinam preparação por API e validação Web quando cada camada produz sinal distinto.
-- **k6:** k6 OSS `2.1.0`, com perfis `smoke`, `post-merge-smoke` e `load`. O runner Node prepara dados quando necessário, chama k6 e produz JSON resumido.
+- **k6:** k6 OSS `2.1.0`, com perfis `smoke`, `post-merge-smoke`, `average-load` e `traffic-variation`. O runner Node chama k6 e produz JSON resumido. Perfis anteriores (`load`, `journey`, `resilience`) foram removidos no QEL-13 por problemas conceituais documentados no ADR 0004.
 - **Segurança:** autorização horizontal e vertical no SUT, CodeQL, Dependency Review, Dependabot, Secret Scanning e Push Protection. Não representa pentest, DAST amplo ou cobertura integral do OWASP Top 10.
 - **CI/CD:** GitHub Actions reutiliza o mesmo Docker Compose, Node.js 24 no runner, Chromium e k6. A versão Node interna das actions não define a versão da aplicação.
-- **Pages:** `portfolio/` é HTML/CSS/JS sem framework; `portfolio/scripts/build.mjs` gera e valida `portfolio/dist/` antes do deploy.
+- **Pages:** `portfolio/` é HTML/CSS/JS sem framework; `portfolio/scripts/build.mjs` gera e valida `portfolio/dist/` antes do deploy. A Central de Evidências é página única com histórico real, baseado em execuções do CI (janela deslizante de 7 dias).
 - **Evidências:** Playwright gera HTML, JSON, traces e screenshots diagnósticos; o gerador em `quality/scripts/generate-quality-summary.mjs` consolida resultados Playwright/k6 e a matriz de riscos em PDF executivo.
 
 As decisões duráveis estão em [docs/adr/](adr/). Preserve a arquitetura atual até um risco concreto justificar evolução.
@@ -95,9 +95,10 @@ O smoke pós-merge seleciona apenas:
 
 Performance atual:
 
-- `smoke`: baixa taxa por 10 s, página de produto e rejeição estruturada de pedido sem carrinho;
-- `post-merge-smoke`: GET-only e curto;
-- `load`: três usuários por 20 s contra carrinho incompleto isolado; execução manual e cleanup obrigatório.
+- `smoke`: saúde rápida (1 it/s × 15 s), jornada completa de descoberta — execução automática no Quality Gate;
+- `post-merge-smoke`: GET-only, curto — confirma saúde pública após merge;
+- `average-load`: ramping 1 → 3 VUs em 40 s — carga esperada, execução manual;
+- `traffic-variation`: ramping 1 → 3 → 1 VUs em 40 s — variação controlada, execução manual.
 
 Os limites k6 são referências do laboratório, não SLA/SLO nem capacidade certificada de produção. Venda acima do estoque (`RISK-014`), prevenção de pedidos duplicados (`RISK-009`) e consistência do estoque após pedidos (`RISK-015`) continuam sem cobertura determinística completa porque o SUT atual não possui checkout com frete/pagamento adequado para criação, cancelamento e restauração confiáveis.
 
@@ -155,21 +156,20 @@ O trabalho funcional restante registrado no Jira é **QEL-13 e QEL-15**. Não at
 
 ## 9. Estado atual
 
-- **Branch principal:** `main`, commit verificado `fc2aac9` (`QEL-17 create navigable project wiki (#17)`).
-- **Branch deste handoff:** `docs/project-handoff`, criada diretamente sobre `origin/main`.
-- **PRs:** nenhum PR aberto no momento da verificação. Os PRs #16 (QEL-11) e #17 (QEL-17) foram mesclados em 22/08/2026. Branches remotas de features ainda existem, mas seu conteúdo já está em `main`; não as trate como trabalho pendente apenas por existirem.
-- **Pipelines:** Quality Gate e CodeQL dos PRs #16/#17 passaram. No commit `fc2aac9`, CodeQL e Post-merge Smoke concluíram com sucesso. O último deploy de Pages observado também passou; QEL-17 não acionou Pages porque não alterou `portfolio/**`.
-- **Concluído:** arquitetura, SUT, matriz, automação, performance inicial, segurança, gates, IA consultiva, experimentos, Portfolio, relatório, smoke pós-merge, linguagem de negócio e fonte da Wiki.
-- **Débitos/limitações conhecidos:** QEL-13 e QEL-15; cobertura residual de `RISK-009`, `RISK-014` e `RISK-015`; performance ainda representa laboratório; sincronização inicial/operacional da Wiki deve ser confirmada manualmente; smoke pós-merge valida um SUT iniciado no runner, não um deployment público.
+- **Branch principal:** `main`, estado verificado no commit `584d34b` (branch `feature/QEL-11-executive-report-refinement`, PR #21 aberto).
+- **PRs recentes:** #16 (QEL-11 evidências), #17 (QEL-17 wiki), #18 (handoff), #19 (QEL-13 performance), #20 (QEL-11 refinamento executivo), #21 (QEL-11 Central de Evidências e footer) — todos submetidos.
+- **Pipelines:** Quality Gate e CodeQL dos PRs anteriores passaram. Nightly executou com sucesso (Run #1, ID 32820074767).
+- **Concluído:** arquitetura, SUT, matriz, automação, performance (perfis reestruturados), segurança, gates, IA consultiva, experimentos, Central de Evidências (página única com dados reais), relatório executivo PDF, smoke pós-merge, linguagem de negócio e fonte da Wiki.
+- **Débitos/limitações conhecidos:** QEL-13 (evoluir performance além do laboratório) como evolução futura; cobertura residual de `RISK-009`, `RISK-014` e `RISK-015`; performance representa laboratório; smoke pós-merge valida SUT no runner, não deployment público.
 
 O EverShop limita login a oito tentativas por IP a cada 15 minutos. Execuções locais repetidas podem retornar HTTP 429; aguarde a janela ou reinicie o SUT, sem mascarar o comportamento com retry.
 
 ## 10. Próximos passos recomendados até v1.0
 
-1. Confirmar a publicação inicial da Wiki e validar Home, Sidebar e links conforme `docs/wiki-publishing.md`.
-2. Executar o QEL-15 como refinamento final da landing, preservando arquitetura, identidade e conteúdo técnico.
-3. Decidir explicitamente se QEL-13 é requisito de v1.0 ou evolução pós-v1.0. Se entrar, manter smoke curto no PR e perfis pesados manuais/agendados.
-4. Fazer uma rodada final reproduzível: SUT saudável, typecheck, suíte completa, performance smoke, PDF revisado a 100%, build do Portfolio e checks do PR.
+1. Confirmar a publicação e sincronização da Wiki conforme `docs/wiki-publishing.md`.
+2. Executar o QEL-15 como refinamento final de apresentação, preservando arquitetura, identidade e conteúdo técnico.
+3. QEL-13 está conscientemente fora do escopo de v1.0; registrar como trabalho futuro após o encerramento.
+4. Fazer uma rodada final reproduzível: SUT saudável, typecheck, suíte completa, performance smoke, PDF revisado, build da Central e checks do PR.
 5. Registrar a versão v1.0 somente após gates verdes e revisão humana das evidências e limitações residuais.
 
 ## 11. Regras para o próximo agente
@@ -206,7 +206,8 @@ npm run test:post-merge-smoke
 # Performance — dentro de quality/
 npm run performance:smoke
 npm run performance:post-merge-smoke
-npm run performance:load      # somente execução controlada/manual
+npm run performance:average-load      # execução manual
+npm run performance:traffic-variation  # execução manual
 
 # Relatórios — dentro de quality/, após gerar resultados
 npm run report

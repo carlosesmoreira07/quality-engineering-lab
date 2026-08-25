@@ -2,7 +2,7 @@
 
 ## Termos
 
-**SUT**: baseline reproduzível do EverShop utilizada como Sistema Sob Teste.
+**SUT**: ambiente de referência reproduzível do EverShop utilizado como Sistema Sob Teste.
 
 **Demanda**: mudança ou objetivo descrito em um card Jira e submetido à análise de impacto.
 

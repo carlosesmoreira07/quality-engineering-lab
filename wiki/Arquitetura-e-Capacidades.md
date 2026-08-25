@@ -1,4 +1,4 @@
-# Arquitetura e Capacidades
+
 
 ## Visão da solução
 
