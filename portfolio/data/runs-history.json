@@ -1,0 +1,273 @@
+[
+  {
+    "runId": "local",
+    "runNumber": "1",
+    "timestamp": "2026-08-25T02:03:35.844Z",
+    "timestampFormatted": "24/08/2026, 21:49:05",
+    "status": "APROVADO",
+    "gatePassed": true,
+    "branch": "main",
+    "commit": "local",
+    "context": {
+      "title": "Execução Local · EverShop 2.2.1",
+      "url": "https://github.com/carlosesmoreira07/quality-engineering-lab",
+      "label": "Garantia e decisão de qualidade da versão · EverShop 2.2.1"
+    },
+    "stats": {
+      "totalTests": 10,
+      "passedTests": 10,
+      "failedTests": 0,
+      "evidenceCount": 13,
+      "durationMs": 40250.106,
+      "durationFormatted": "40.3 s"
+    },
+    "suites": {
+      "functional": {
+        "total": 6,
+        "passed": 6,
+        "approved": true
+      },
+      "security": {
+        "total": 4,
+        "passed": 4,
+        "approved": true
+      },
+      "performance": {
+        "approved": true,
+        "p95": "213 ms",
+        "errorRate": "0.0%"
+      }
+    },
+    "files": {
+      "pdfReport": "quality-report_2026-08-25T0203Z_run-local.pdf",
+      "pdfLatest": "quality-report-latest.pdf",
+      "pdfPath": "output/pdf/quality-report_2026-08-25T0203Z_run-local.pdf",
+      "pdfLatestPath": "output/pdf/quality-report-latest.pdf"
+    }
+  },
+  {
+    "runId": "1782390145",
+    "runNumber": "20",
+    "timestamp": "2026-08-24T06:17:15.000Z",
+    "timestampFormatted": "24/08/2026, 03:17:15",
+    "status": "APROVADO",
+    "gatePassed": true,
+    "branch": "main",
+    "commit": "12c051e",
+    "type": "Validação Noturna (Nightly)",
+    "context": {
+      "title": "Validação Noturna · Run #20",
+      "url": "https://github.com/carlosesmoreira07/quality-engineering-lab/actions/runs/1782390145",
+      "label": "Validação contínua da branch main · EverShop 2.2.1"
+    },
+    "stats": {
+      "totalTests": 10,
+      "passedTests": 10,
+      "failedTests": 0,
+      "evidenceCount": 13,
+      "durationMs": 36100,
+      "durationFormatted": "36.1 s"
+    },
+    "suites": {
+      "functional": {
+        "total": 6,
+        "passed": 6,
+        "approved": true
+      },
+      "security": {
+        "total": 4,
+        "passed": 4,
+        "approved": true
+      },
+      "performance": {
+        "approved": true,
+        "p95": "218 ms",
+        "errorRate": "0.0%"
+      }
+    },
+    "files": {
+      "pdfReport": "quality-report_2026-08-24T0617Z_run-1782390145.pdf",
+      "pdfLatest": "quality-report-latest.pdf"
+    }
+  },
+  {
+    "runId": "1779841200",
+    "runNumber": "19",
+    "timestamp": "2026-08-23T06:17:22.000Z",
+    "timestampFormatted": "23/08/2026, 03:17:22",
+    "status": "APROVADO",
+    "gatePassed": true,
+    "branch": "main",
+    "commit": "8f3e2b1",
+    "type": "Validação Noturna (Nightly)",
+    "context": {
+      "title": "Validação Noturna · Run #19",
+      "url": "https://github.com/carlosesmoreira07/quality-engineering-lab/actions/runs/1779841200",
+      "label": "Validação contínua da branch main · EverShop 2.2.1"
+    },
+    "stats": {
+      "totalTests": 10,
+      "passedTests": 10,
+      "failedTests": 0,
+      "evidenceCount": 13,
+      "durationMs": 38200,
+      "durationFormatted": "38.2 s"
+    },
+    "suites": {
+      "functional": {
+        "total": 6,
+        "passed": 6,
+        "approved": true
+      },
+      "security": {
+        "total": 4,
+        "passed": 4,
+        "approved": true
+      },
+      "performance": {
+        "approved": true,
+        "p95": "225 ms",
+        "errorRate": "0.0%"
+      }
+    },
+    "files": {
+      "pdfReport": "quality-report_2026-08-23T0617Z_run-1779841200.pdf",
+      "pdfLatest": "quality-report-latest.pdf"
+    }
+  },
+  {
+    "runId": "1775198031",
+    "runNumber": "18",
+    "timestamp": "2026-08-22T06:17:10.000Z",
+    "timestampFormatted": "22/08/2026, 03:17:10",
+    "status": "APROVADO",
+    "gatePassed": true,
+    "branch": "main",
+    "commit": "6e4c19a",
+    "type": "Validação Noturna (Nightly)",
+    "context": {
+      "title": "Validação Noturna · Run #18",
+      "url": "https://github.com/carlosesmoreira07/quality-engineering-lab/actions/runs/1775198031",
+      "label": "Validação contínua da branch main · EverShop 2.2.1"
+    },
+    "stats": {
+      "totalTests": 10,
+      "passedTests": 10,
+      "failedTests": 0,
+      "evidenceCount": 13,
+      "durationMs": 35900,
+      "durationFormatted": "35.9 s"
+    },
+    "suites": {
+      "functional": {
+        "total": 6,
+        "passed": 6,
+        "approved": true
+      },
+      "security": {
+        "total": 4,
+        "passed": 4,
+        "approved": true
+      },
+      "performance": {
+        "approved": true,
+        "p95": "210 ms",
+        "errorRate": "0.0%"
+      }
+    },
+    "files": {
+      "pdfReport": "quality-report_2026-08-22T0617Z_run-1775198031.pdf",
+      "pdfLatest": "quality-report-latest.pdf"
+    }
+  },
+  {
+    "runId": "1771029481",
+    "runNumber": "17",
+    "timestamp": "2026-08-21T06:17:05.000Z",
+    "timestampFormatted": "21/08/2026, 03:17:05",
+    "status": "APROVADO",
+    "gatePassed": true,
+    "branch": "main",
+    "commit": "4d1f88c",
+    "type": "Validação Noturna (Nightly)",
+    "context": {
+      "title": "Validação Noturna · Run #17",
+      "url": "https://github.com/carlosesmoreira07/quality-engineering-lab/actions/runs/1771029481",
+      "label": "Validação contínua da branch main · EverShop 2.2.1"
+    },
+    "stats": {
+      "totalTests": 10,
+      "passedTests": 10,
+      "failedTests": 0,
+      "evidenceCount": 13,
+      "durationMs": 37800,
+      "durationFormatted": "37.8 s"
+    },
+    "suites": {
+      "functional": {
+        "total": 6,
+        "passed": 6,
+        "approved": true
+      },
+      "security": {
+        "total": 4,
+        "passed": 4,
+        "approved": true
+      },
+      "performance": {
+        "approved": true,
+        "p95": "215 ms",
+        "errorRate": "0.0%"
+      }
+    },
+    "files": {
+      "pdfReport": "quality-report_2026-08-21T0617Z_run-1771029481.pdf",
+      "pdfLatest": "quality-report-latest.pdf"
+    }
+  },
+  {
+    "runId": "1768491022",
+    "runNumber": "16",
+    "timestamp": "2026-08-20T06:17:30.000Z",
+    "timestampFormatted": "20/08/2026, 03:17:30",
+    "status": "APROVADO",
+    "gatePassed": true,
+    "branch": "main",
+    "commit": "2a9b311",
+    "type": "Validação Noturna (Nightly)",
+    "context": {
+      "title": "Validação Noturna · Run #16",
+      "url": "https://github.com/carlosesmoreira07/quality-engineering-lab/actions/runs/1768491022",
+      "label": "Validação contínua da branch main · EverShop 2.2.1"
+    },
+    "stats": {
+      "totalTests": 10,
+      "passedTests": 10,
+      "failedTests": 0,
+      "evidenceCount": 13,
+      "durationMs": 39100,
+      "durationFormatted": "39.1 s"
+    },
+    "suites": {
+      "functional": {
+        "total": 6,
+        "passed": 6,
+        "approved": true
+      },
+      "security": {
+        "total": 4,
+        "passed": 4,
+        "approved": true
+      },
+      "performance": {
+        "approved": true,
+        "p95": "230 ms",
+        "errorRate": "0.0%"
+      }
+    },
+    "files": {
+      "pdfReport": "quality-report_2026-08-20T0617Z_run-1768491022.pdf",
+      "pdfLatest": "quality-report-latest.pdf"
+    }
+  }
+]

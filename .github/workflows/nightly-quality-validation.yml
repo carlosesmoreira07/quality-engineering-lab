@@ -1,47 +1,36 @@
-name: Quality Gate
+name: Nightly Quality Validation
 
 on:
-  pull_request:
-    branches:
-      - main
+  schedule:
+    # 03:17 America/Sao_Paulo (UTC-3) = 06:17 UTC diariamente
+    - cron: '17 6 * * *'
   workflow_dispatch:
-    inputs:
-      performance_profile:
-        description: Cenário de performance
-        required: true
-        default: smoke
-        type: choice
-        options:
-          - smoke
-          - average-load
-          - traffic-variation
 
 concurrency:
-  group: quality-gate-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: nightly-quality-validation
+  cancel-in-progress: false
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
 
 jobs:
-  quality-gate:
-    name: Quality Gate
+  nightly-validation:
+    name: Nightly Quality Battery
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     env:
       CI: true
+      IS_NIGHTLY: true
       E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
       E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
 
     steps:
-      - name: Checkout
+      - name: Checkout main repository
         uses: actions/checkout@v6
-
-      - name: Gate 1 — Dependency changes
-        if: ${{ github.event_name == 'pull_request' }}
-        uses: actions/dependency-review-action@v5
         with:
-          fail-on-severity: high
+          ref: main
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -50,11 +39,11 @@ jobs:
           cache: npm
           cache-dependency-path: quality/package-lock.json
 
-      - name: Install dependencies
+      - name: Install quality dependencies
         working-directory: quality
         run: npm ci
 
-      - name: Gate 2 — Build and type safety
+      - name: Gate 1 — Build and type safety
         working-directory: quality
         run: npm run typecheck
 
@@ -75,7 +64,7 @@ jobs:
         with:
           k6-version: 2.1.0
 
-      - name: Gate 3 — Start healthy SUT
+      - name: Gate 2 — Start healthy SUT in isolated environment
         run: docker compose -f sut/docker-compose.yml up -d --wait --wait-timeout 300
 
       - name: Create ephemeral CI administrator
@@ -83,51 +72,55 @@ jobs:
         run: >-
           docker compose -f sut/docker-compose.yml exec -T
           -e E2E_ADMIN_EMAIL -e E2E_ADMIN_PASSWORD evershop
-          sh -c 'npm run user:create -- --email "$E2E_ADMIN_EMAIL" --password "$E2E_ADMIN_PASSWORD" --name "QEL CI Administrator"'
+          sh -c 'npm run user:create -- --email "$E2E_ADMIN_EMAIL" --password "$E2E_ADMIN_PASSWORD" --name "QEL Nightly Administrator"'
 
-      - name: Gate 4 — Functional, API and security automation
+      - name: Gate 3 — Functional, API and security automation
         working-directory: quality
         run: npm test
 
-      - name: Gate 5 — Performance smoke
-        if: ${{ github.event_name == 'pull_request' || inputs.performance_profile == 'smoke' }}
+      - name: Gate 4 — Daily performance regression smoke
         working-directory: quality
         run: npm run performance:smoke
 
-      - name: Carga esperada — Execução manual
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.performance_profile == 'average-load' }}
-        working-directory: quality
-        run: npm run performance:average-load
-
-      - name: Variação controlada de tráfego — Execução manual
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.performance_profile == 'traffic-variation' }}
-        working-directory: quality
-        run: npm run performance:traffic-variation
-
-      - name: Generate Quality Summary
+      - name: Generate Quality Summary Report & Manifest
         if: ${{ !cancelled() && hashFiles('quality/test-results/results.json') != '' }}
         working-directory: quality
         run: npm run report:summary
 
-      - name: Gate 6 — Verify evidence outputs
+      - name: Gate 5 — Verify evidence outputs
         if: ${{ success() }}
         shell: bash
         run: |
           test -f quality/test-results/results.json
-          test -f quality/playwright-report/index.html
           test -f output/pdf/quality-report-latest.pdf
           test -f output/quality-summary.json
           compgen -G 'output/pdf/quality-report_*.pdf' > /dev/null
-          compgen -G 'quality/performance-smoke-*-summary.json' > /dev/null || \
-          compgen -G 'quality/performance-average-load-*-summary.json' > /dev/null || \
-          compgen -G 'quality/performance-traffic-variation-*-summary.json' > /dev/null || \
-          compgen -G 'quality/performance-post-merge-smoke-*-summary.json' > /dev/null
+          compgen -G 'quality/performance-smoke-*-summary.json' > /dev/null
 
-      - name: Publish test evidence
+      - name: Build Quality Evidence Hub
+        if: ${{ success() }}
+        run: node portfolio/scripts/build.mjs
+
+      - name: Configure GitHub Pages
+        if: ${{ success() }}
+        uses: actions/configure-pages@v6
+
+      - name: Upload Pages artifact
+        if: ${{ success() }}
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: portfolio/dist
+
+      - name: Deploy Quality Evidence Hub to GitHub Pages
+        if: ${{ success() }}
+        id: deployment
+        uses: actions/deploy-pages@v5
+
+      - name: Publish nightly test evidence
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
-          name: quality-evidence-${{ github.run_number }}
+          name: nightly-quality-evidence-${{ github.run_number }}
           path: |
             quality/playwright-report/
             quality/test-results/

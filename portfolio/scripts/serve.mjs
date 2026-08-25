@@ -11,22 +11,29 @@ const mime = new Map([
   ['.html', 'text/html; charset=utf-8'],
   ['.css', 'text/css; charset=utf-8'],
   ['.js', 'text/javascript; charset=utf-8'],
+  ['.json', 'application/json; charset=utf-8'],
+  ['.pdf', 'application/pdf'],
   ['.png', 'image/png'],
   ['.webp', 'image/webp'],
+  ['.svg', 'image/svg+xml']
 ]);
 
 const server = http.createServer(async (request, response) => {
   const pathname = decodeURIComponent(new URL(request.url ?? '/', 'http://localhost').pathname);
-  const relative = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
-  const file = path.resolve(root, relative);
+  let relative = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
+  let file = path.resolve(root, relative);
 
-  if (!file.startsWith(`${root}${path.sep}`) && file !== path.join(root, 'index.html')) {
+  if (!file.startsWith(`${root}${path.sep}`) && file !== root && file !== path.join(root, 'index.html')) {
     response.writeHead(403).end('Forbidden');
     return;
   }
 
   try {
-    const fileStat = await stat(file);
+    let fileStat = await stat(file);
+    if (fileStat.isDirectory()) {
+      file = path.join(file, 'index.html');
+      fileStat = await stat(file);
+    }
     if (!fileStat.isFile()) throw new Error('Not a file');
     response.writeHead(200, { 'content-type': mime.get(path.extname(file)) ?? 'application/octet-stream' });
     createReadStream(file).pipe(response);
@@ -36,5 +43,5 @@ const server = http.createServer(async (request, response) => {
 });
 
 server.listen(port, 'localhost', () => {
-  console.log(`Portfolio preview: http://localhost:${port}`);
+  console.log(`Portal de Evidências preview: http://localhost:${port}`);
 });

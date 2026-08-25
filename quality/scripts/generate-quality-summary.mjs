@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdir, readFile, readdir, stat } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
@@ -7,9 +7,73 @@ import { chromium } from '@playwright/test';
 const qualityDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const repositoryDir = path.resolve(qualityDir, '..');
 const resultsPath = path.join(qualityDir, 'test-results', 'results.json');
-const outputPath = path.join(repositoryDir, 'output', 'pdf', 'qel-4-test-evidence.pdf');
 const riskStrategyPath = path.join(repositoryDir, 'docs', 'quality-strategy.md');
 const priorityValues = { Baixo: 1, Médio: 2, Alto: 3, Crítico: 4 };
+
+function getExecutionMetadata() {
+  const rawRunId = process.env.GITHUB_RUN_ID || 'local';
+  const runId = process.env.GITHUB_RUN_ID ? `run-${process.env.GITHUB_RUN_ID}` : 'run-local';
+  const runNumber = process.env.GITHUB_RUN_NUMBER || '1';
+  const now = new Date();
+
+  // Formato ISO sem caracteres problemáticos: YYYY-MM-DDTHHmmZ (ex: 2026-08-25T0113Z)
+  const year = now.getUTCFullYear();
+  const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(now.getUTCDate()).padStart(2, '0');
+  const hours = String(now.getUTCHours()).padStart(2, '0');
+  const minutes = String(now.getUTCMinutes()).padStart(2, '0');
+
+  const isoStamp = `${year}-${month}-${day}T${hours}${minutes}Z`;
+  const reportFileName = `quality-report_${isoStamp}_${runId}.pdf`;
+  const latestFileName = 'quality-report-latest.pdf';
+
+  return { rawRunId, runId, runNumber, isoStamp, reportFileName, latestFileName, now };
+}
+
+function getContextMetadata(execMeta) {
+  const prNumber = process.env.PR_NUMBER || (process.env.GITHUB_REF?.match(/refs\/pull\/(\d+)/)?.[1]);
+  const isNightly = process.env.GITHUB_WORKFLOW?.toLowerCase().includes('nightly') || process.env.IS_NIGHTLY === 'true';
+  const isCI = Boolean(process.env.CI || process.env.GITHUB_RUN_ID);
+
+  if (prNumber) {
+    return {
+      title: `Pull Request #${prNumber} · QEL-11`,
+      url: `https://github.com/carlosesmoreira07/quality-engineering-lab/pull/${prNumber}`,
+      label: 'Garantia e decisão de qualidade da versão · EverShop 2.2.1'
+    };
+  }
+
+  if (isNightly || (isCI && process.env.GITHUB_REF_NAME === 'main')) {
+    return {
+      title: `Nightly Validation · Run #${execMeta.runNumber}`,
+      url: `https://github.com/carlosesmoreira07/quality-engineering-lab/actions/runs/${execMeta.rawRunId}`,
+      label: 'Validação contínua da branch main · EverShop 2.2.1'
+    };
+  }
+
+  if (isCI) {
+    return {
+      title: `Workflow Run #${execMeta.runNumber} (${process.env.GITHUB_REF_NAME || 'CI'})`,
+      url: `https://github.com/carlosesmoreira07/quality-engineering-lab/actions/runs/${execMeta.rawRunId}`,
+      label: 'Garantia e decisão de qualidade da versão · EverShop 2.2.1'
+    };
+  }
+
+  return {
+    title: 'Execução Local · EverShop 2.2.1',
+    url: 'https://github.com/carlosesmoreira07/quality-engineering-lab',
+    label: 'Garantia e decisão de qualidade da versão · EverShop 2.2.1'
+  };
+}
+
+const execMeta = getExecutionMetadata();
+const contextMeta = getContextMetadata(execMeta);
+const outputPdfDir = path.join(repositoryDir, 'output', 'pdf');
+const reportOutputPath = path.join(outputPdfDir, execMeta.reportFileName);
+const latestOutputPath = path.join(outputPdfDir, execMeta.latestFileName);
+const legacyOutputPath = path.join(outputPdfDir, 'qel-4-test-evidence.pdf');
+const summaryJsonPath = path.join(repositoryDir, 'output', 'quality-summary.json');
+
 
 function parseRiskCatalog(strategy) {
   const risks = {};
@@ -502,7 +566,9 @@ function performancePage(performance, pageNumber, totalPages) {
         <h2>Resultados detalhados por etapa da jornada</h2>
         <div class="perf-checks-grid">
           ${verifications.map((check) => {
-            const cleanName = check.name.replace(/^\[(Saúde|Carga|Variação)\]\s*/i, '');
+            const cleanName = check.name
+              .replace(/^\[(Saúde|Carga|Variação)\]\s*/i, '')
+              .replace(/produto baseline/i, 'produto do catálogo');
             return `
               <article class="perf-check-item">
                 <i class="${check.fails === 0 ? 'pass' : 'fail'}"></i>
@@ -703,10 +769,10 @@ const executivePage = `
         <p>Decisão executiva baseada em riscos e evidências reais</p>
       </div>
       <div class="report-meta">
-        <a href="https://github.com/carlosesmoreira07/quality-engineering-lab/pull/20" class="pr-link" target="_blank">
-          <b>Pull Request #20 · QEL-11</b>
+        <a href="${escapeHtml(contextMeta.url)}" class="pr-link" target="_blank" rel="noopener noreferrer">
+          <b>${escapeHtml(contextMeta.title)}</b>
         </a>
-        <span class="meta-label">Garantia e decisão de qualidade da versão · EverShop 2.2.1</span>
+        <span class="meta-label">${escapeHtml(contextMeta.label)}</span>
         <span class="meta-date">${escapeHtml(startedAt.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }))}</span>
       </div>
     </header>
@@ -1452,7 +1518,9 @@ const html = `<!doctype html>
 </body>
 </html>`;
 
-await mkdir(path.dirname(outputPath), { recursive: true });
+await mkdir(outputPdfDir, { recursive: true });
+await mkdir(path.dirname(summaryJsonPath), { recursive: true });
+
 const browser = await chromium.launch({ headless: true });
 try {
   const page = await browser.newPage();
@@ -1460,11 +1528,15 @@ try {
   await page.waitForFunction(() => [...document.images].every((image) => image.complete));
   await page.emulateMedia({ media: 'print' });
   await page.pdf({
-    path: outputPath,
+    path: reportOutputPath,
     printBackground: true,
     preferCSSPageSize: true,
     margin: { top: 0, right: 0, bottom: 0, left: 0 }
   });
+
+  // Copiar para o alias latest estável e para fallback de compatibilidade
+  await copyFile(reportOutputPath, latestOutputPath);
+  await copyFile(reportOutputPath, legacyOutputPath);
 
   if (process.env.SCREENSHOT_PAGES === 'true') {
     const previewDir = path.resolve('C:/Users/Carlos Moreira/.gemini/antigravity-ide/brain/a3b5b8e6-d72c-4e35-b1db-9d42cd906c11/scratch/pages');
@@ -1480,5 +1552,54 @@ try {
   await browser.close();
 }
 
-console.log(`Quality Report gerado: ${outputPath}`);
+// Gravação do manifesto estruturado de execução para o Quality Evidence Hub
+const summaryPayload = {
+  runId: execMeta.rawRunId,
+  runNumber: execMeta.runNumber,
+  timestamp: execMeta.now.toISOString(),
+  timestampFormatted: startedAt.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+  status: allApproved ? 'APROVADO' : 'REPROVADO',
+  gatePassed: allApproved,
+  branch: process.env.GITHUB_REF_NAME || 'main',
+  commit: process.env.GITHUB_SHA ? process.env.GITHUB_SHA.slice(0, 7) : 'local',
+  context: contextMeta,
+  stats: {
+    totalTests: total,
+    passedTests: passed,
+    failedTests: failures,
+    evidenceCount,
+    durationMs: totalDuration,
+    durationFormatted: formatDuration(totalDuration)
+  },
+  suites: {
+    functional: {
+      total: suiteStatus.functional.total,
+      passed: suiteStatus.functional.passed,
+      approved: suiteStatus.functional.approved
+    },
+    security: {
+      total: suiteStatus.security.total,
+      passed: suiteStatus.security.passed,
+      approved: suiteStatus.security.approved
+    },
+    performance: {
+      approved: suiteStatus.performance.approved,
+      p95: suiteStatus.performance.p95,
+      errorRate: suiteStatus.performance.errorRate
+    }
+  },
+  files: {
+    pdfReport: execMeta.reportFileName,
+    pdfLatest: execMeta.latestFileName,
+    pdfPath: `output/pdf/${execMeta.reportFileName}`,
+    pdfLatestPath: `output/pdf/${execMeta.latestFileName}`
+  }
+};
+
+await writeFile(summaryJsonPath, JSON.stringify(summaryPayload, null, 2), 'utf8');
+
+console.log(`Quality Report gerado (histórico): ${reportOutputPath}`);
+console.log(`Quality Report gerado (latest):    ${latestOutputPath}`);
+console.log(`Manifesto estruturado gerado:      ${summaryJsonPath}`);
 console.log(`Gate: ${allApproved ? 'APROVADO' : 'REPROVADO'} | Testes: ${passed}/${total} | Evidências: ${evidenceCount} | Páginas: ${totalPages}`);
+

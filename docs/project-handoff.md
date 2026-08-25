@@ -103,9 +103,9 @@ Os limites k6 são referências do laboratório, não SLA/SLO nem capacidade cer
 
 ## 6. Evidências e relatórios
 
-O Playwright produz `quality/playwright-report/`, `quality/test-results/results.json`, attachments, traces e screenshots de falha. O k6 produz `quality/performance-*-summary.json`. `npm run report:summary` lê essas fontes e gera `output/pdf/qel-4-test-evidence.pdf`.
+O Playwright produz `quality/playwright-report/`, `quality/test-results/results.json`, attachments, traces e screenshots de falha. O k6 produz `quality/performance-*-summary.json`. `npm run report:summary` lê essas fontes e gera o relatório rastreável `output/pdf/quality-report_<timestamp-ISO>_run-<github-run-id>.pdf`, o ponteiro público `output/pdf/quality-report-latest.pdf` e o manifesto `output/quality-summary.json` consumido pelo Quality Evidence Hub no GitHub Pages.
 
-O HTML é técnico e voltado à investigação. O PDF é executivo: contexto e decisão, áreas validadas, casos/evidências, conclusão e linha do tempo das barreiras da qualidade. A narrativa preserva risco → controle → evidência → decisão e apresenta nome de negócio antes do ID técnico.
+O HTML do Playwright é técnico e voltado à investigação. O PDF é executivo: contexto e decisão, áreas validadas, casos/evidências, conclusão e linha do tempo das barreiras da qualidade. A narrativa preserva risco → controle → evidência → decisão e apresenta nome de negócio antes do ID técnico.
 
 Evidências Web são capturadas **depois das assertions**. A tela validada não é alterada; uma cópia recebe callout discreto no checkpoint relevante. Verde indica controle aprovado e vermelho indica falha. A demonstração controlada `npm run evidence:failure-demo` usa uma página local efêmera, não toca o SUT e comprova separadamente a geração de evidência vermelha sem quebrar a execução principal.
 
