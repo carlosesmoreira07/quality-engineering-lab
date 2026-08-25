@@ -1,4 +1,4 @@
-# IA aplicada a QE
+
 
 ## Papel da IA
 

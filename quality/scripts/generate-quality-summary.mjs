@@ -37,7 +37,7 @@ function getContextMetadata(execMeta) {
 
   if (prNumber) {
     return {
-      title: `Pull Request #${prNumber} · QEL-11`,
+      title: `Pull Request #${prNumber}`,
       url: `https://github.com/carlosesmoreira07/quality-engineering-lab/pull/${prNumber}`,
       label: 'Garantia e decisão de qualidade da versão · EverShop 2.2.1'
     };

@@ -39,3 +39,18 @@ O Quality Engineering Lab demandava evolução em três frentes:
 - Rastreabilidade ponta a ponta entre execuções de CI, relatórios PDF e links do GitHub Actions/PRs.
 - Publicação contínua de evidências sem poluição do histórico Git.
 - Segurança operacional blindada pela proibição estrita de mutações em produção.
+
+## Evolução — Consolidação em Página Única (QEL-11)
+
+A estrutura multi-rota descrita acima foi implementada e validada. Posteriormente, a análise de uso identificou redundância: as rotas `/latest/` e `/runs/` duplicavam conteúdo já presente na Home e adicionavam navegação desnecessária para uma janela de apenas 7 dias.
+
+A Central de Evidências foi consolidada em **página única** (`/index.html`), passando a reunir em um único lugar:
+
+- destaque para a última execução com métricas dos três pilares (funcional, segurança, performance);
+- ações diretas: visualização do PDF em modal, download e abertura do Playwright Report em nova aba;
+- histórico das execuções recentes em tabela (desktop) e cards (mobile);
+- link para o GitHub Actions de cada execução.
+
+As rotas `/latest/` e `/runs/` não existem mais como páginas de navegação pública. Os artefatos históricos (PDFs, Playwright Reports) continuam associados individualmente às execuções reais em `runs/<run-id>/` dentro de `portfolio/dist/`, utilizados como endpoints de link — não como páginas navegáveis independentes.
+
+O PDF `quality-report-latest.pdf` permanece como alias estável para o relatório mais recente.

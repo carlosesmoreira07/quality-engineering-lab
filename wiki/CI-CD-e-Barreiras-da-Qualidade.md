@@ -1,4 +1,4 @@
-# CI/CD e Barreiras da Qualidade
+
 
 ## Dois momentos, duas decisões
 

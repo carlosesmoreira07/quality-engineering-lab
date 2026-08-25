@@ -1,4 +1,4 @@
-# Como Executar
+
 
 Este é o caminho mínimo para uma primeira execução local. Os guias técnicos do repositório continuam sendo a fonte para opções, diagnóstico e limitações.
 

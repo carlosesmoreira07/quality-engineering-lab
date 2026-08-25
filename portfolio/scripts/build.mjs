@@ -288,7 +288,7 @@ function runMetricsMarkup(run) {
       <div class="metric-box">
         <small>Evidências visuais e técnicas</small>
         <strong>${run.stats.evidenceCount}</strong>
-        <span>Capturas &amp; Contratos</span>
+        <span>Evidências visuais e técnicas</span>
       </div>
       <div class="metric-box">
         <small>Duração Total</small>

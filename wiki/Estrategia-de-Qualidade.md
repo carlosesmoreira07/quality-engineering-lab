@@ -1,4 +1,4 @@
-# Estratégia de Qualidade
+
 
 ## Princípio central
 
