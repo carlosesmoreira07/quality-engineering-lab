@@ -23,6 +23,15 @@ jobs:
     timeout-minutes: 5
 
     steps:
+      - name: Validate WIKI_TOKEN secret
+        env:
+          WIKI_TOKEN: ${{ secrets.WIKI_TOKEN }}
+        run: |
+          if [ -z "${WIKI_TOKEN}" ]; then
+            echo "::error::Secret WIKI_TOKEN is not configured or is empty. Please configure WIKI_TOKEN in repository secrets."
+            exit 1
+          fi
+
       - name: Checkout main repository
         uses: actions/checkout@v6
         with:
@@ -30,13 +39,9 @@ jobs:
 
       - name: Clone GitHub Wiki
         env:
-          AUTH_TOKEN: ${{ secrets.WIKI_TOKEN || secrets.GITHUB_TOKEN }}
+          WIKI_TOKEN: ${{ secrets.WIKI_TOKEN }}
         run: |
-          if [ -z "${AUTH_TOKEN}" ]; then
-            echo "::error::Authentication token is missing. Please configure WIKI_TOKEN in repository secrets."
-            exit 1
-          fi
-          git clone "https://x-access-token:${AUTH_TOKEN}@github.com/${{ github.repository }}.wiki.git" wiki-repo
+          git clone "https://x-access-token:${WIKI_TOKEN}@github.com/${{ github.repository }}.wiki.git" wiki-repo
 
       - name: Synchronize wiki content
         run: |
