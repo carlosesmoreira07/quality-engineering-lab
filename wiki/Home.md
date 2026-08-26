@@ -34,7 +34,7 @@ O laboratório usa uma plataforma de comércio eletrônico realista para exercit
 
 - [Execuções e artifacts no GitHub Actions](https://github.com/carlosesmoreira07/quality-engineering-lab/actions)
 - [Controles e Evidências](Controles-e-Evidencias)
-- [Portfolio Showcase](https://carlosesmoreira07.github.io/quality-engineering-lab/)
+- [Central de Evidências](https://carlosesmoreira07.github.io/quality-engineering-lab/)
 
 ## Aprofundamento
 

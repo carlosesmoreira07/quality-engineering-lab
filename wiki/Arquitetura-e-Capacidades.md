@@ -1,5 +1,3 @@
-
-
 ## Visão da solução
 
 ```text

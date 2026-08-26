@@ -1,5 +1,3 @@
-
-
 ## Riscos protegidos
 
 Os controles priorizam privacidade entre clientes e proteção do acesso administrativo. As referências técnicas correspondentes são **Privacidade de pedidos entre clientes** (`RISK-005`) e **Proteção do acesso administrativo a pedidos** (`RISK-016`).

@@ -1,5 +1,3 @@
-
-
 ## Papel da IA
 
 A IA acelera a análise de impacto; ela não decide qualidade. A skill `qe-impact-analysis` lê uma demanda no Jira, relaciona comportamentos a riscos e descobre controles existentes diretamente no repositório.

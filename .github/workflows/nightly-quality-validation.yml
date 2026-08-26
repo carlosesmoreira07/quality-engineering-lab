@@ -12,6 +12,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: read
   pages: write
   id-token: write
 
@@ -99,6 +100,8 @@ jobs:
 
       - name: Compilação da Central de Evidências
         if: ${{ success() }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node portfolio/scripts/build.mjs
 
       - name: Configuração do GitHub Pages

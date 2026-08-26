@@ -1,5 +1,3 @@
-
-
 ## Por que existem
 
 Um controle verde mostra que o comportamento esperado foi observado. Um experimento controlado complementa essa evidência ao demonstrar que o mesmo controle fica vermelho quando uma regressão específica é introduzida.
