@@ -530,16 +530,17 @@ a:hover {
 .runs-table th {
   background: var(--surface-raised);
   color: var(--muted);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  padding: 0.85rem 1rem;
+  padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--line);
+  vertical-align: middle;
 }
 
 .runs-table td {
-  padding: 1rem;
+  padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--line);
   color: var(--ink-secondary);
   vertical-align: middle;
@@ -553,26 +554,42 @@ a:hover {
   background: var(--surface-hover);
 }
 
+.runs-table th.col-center,
+.runs-table td.col-center {
+  text-align: center;
+}
+
 .cell-run-id {
   font-family: var(--font-mono);
   font-weight: 700;
   color: var(--ink);
+  white-space: nowrap;
 }
 
 .cell-time {
   font-size: 0.8rem;
   color: var(--muted);
+  white-space: nowrap;
+}
+
+.cell-context {
+  white-space: normal;
+  line-height: 1.35;
 }
 
 .cell-status-tag {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem;
   font-weight: 750;
   font-size: 0.75rem;
-  padding: 0.25rem 0.55rem;
+  height: 24px;
+  padding: 0 0.55rem;
   border-radius: 4px;
   text-transform: uppercase;
+  vertical-align: middle;
+  line-height: 1;
 }
 
 .cell-status-tag.pass {
@@ -585,20 +602,33 @@ a:hover {
   color: #ff6b6b;
 }
 
+.cell-mono {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+td.cell-actions-col {
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
 .cell-actions {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  white-space: nowrap;
+  vertical-align: middle;
 }
 
 .btn-table {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem;
   font-size: 0.8rem;
   font-weight: 700;
-  padding: 0.4rem 0.75rem;
+  height: 32px;
+  padding: 0 0.75rem;
   border-radius: 4px;
   text-decoration: none;
   cursor: pointer;
@@ -606,6 +636,9 @@ a:hover {
   background: transparent;
   color: inherit;
   font-family: inherit;
+  line-height: 1;
+  vertical-align: middle;
+  box-sizing: border-box;
   transition: all 0.15s ease;
 }
 
