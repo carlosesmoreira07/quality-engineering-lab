@@ -10,5 +10,6 @@ As Architecture Decision Records (ADRs) registram contexto, decisão, alternativ
 | IA assistiva | por que IA recomenda, mas não altera nem aprova | [ADR 0006](https://github.com/carlosesmoreira07/quality-engineering-lab/blob/main/docs/adr/0006-ai-assisted-quality-engineering.md) |
 | Regressões controladas | como provar detecção sem contaminar a versão estável | [ADR 0007](https://github.com/carlosesmoreira07/quality-engineering-lab/blob/main/docs/adr/0007-controlled-regression-experiments.md) |
 | Portfolio Showcase | por que a narrativa pública usa site estático e fontes reais | [ADR 0008](https://github.com/carlosesmoreira07/quality-engineering-lab/blob/main/docs/adr/0008-portfolio-showcase.md) |
+| Central de Evidências e Validação Noturna | como o Hub unificado e as validações noturnas consolidam evidências reais | [ADR 0009](https://github.com/carlosesmoreira07/quality-engineering-lab/blob/main/docs/adr/0009-quality-evidence-hub-and-nightly-validation.md) |
 
 Novas decisões devem ser registradas somente quando forem duráveis e tiverem alternativas relevantes. Guias de uso e detalhes operacionais pertencem aos READMEs técnicos, não aos ADRs.

@@ -32,10 +32,12 @@ A decisão é orientada pelo princípio **Risco → Controle → Evidência → 
 
 ## Comece por aqui
 
-- 📊 **[Central de Evidências](https://carlosesmoreira07.github.io/quality-engineering-lab/)** — Resultados das execuções reais, métricas dos 3 pilares e relatórios em PDF.
+- 📊 **[Central de Evidências](https://carlosesmoreira07.github.io/quality-engineering-lab/)** — Resultados das execuções reais, métricas dos 3 pilares e histórico consolidado.
+- 📄 **[Último Quality Report (PDF)](https://carlosesmoreira07.github.io/quality-engineering-lab/quality-report-latest.pdf)** — Relatório executivo oficial consolidado da última execução estável.
 - 📚 **[Wiki Oficial](https://github.com/carlosesmoreira07/quality-engineering-lab/wiki)** — Jornada explicativa completa por perfil (PO, Dev, QA, Liderança).
 - ⚙️ **[GitHub Actions](https://github.com/carlosesmoreira07/quality-engineering-lab/actions)** — Histórico auditável de execuções dos Quality Gates e da Validação Noturna.
-- 📐 **[Decisões de Arquitetura (ADRs)](docs/adr/)** — Rationale técnico para cada escolha do projeto.
+- 💻 **[Código Fonte & Automação](quality/)** — Implementação dos testes Playwright, cenários k6 e scripts de qualidade.
+- 📐 **[Decisões de Arquitetura (ADRs)](docs/adr/)** — Rationale técnico e registro histórico de cada escolha do projeto.
 
 ## Arquitetura simplificada
 

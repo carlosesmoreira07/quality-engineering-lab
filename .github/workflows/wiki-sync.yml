@@ -1,0 +1,63 @@
+name: Sync Wiki
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'wiki/**'
+      - '.github/workflows/wiki-sync.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wiki-sync
+  cancel-in-progress: false
+
+jobs:
+  sync-wiki:
+    name: Synchronize Wiki
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Validate WIKI_TOKEN secret
+        env:
+          WIKI_TOKEN: ${{ secrets.WIKI_TOKEN }}
+        run: |
+          if [ -z "${WIKI_TOKEN}" ]; then
+            echo "::error::Secret WIKI_TOKEN is not configured or is empty. Please configure WIKI_TOKEN in repository secrets."
+            exit 1
+          fi
+
+      - name: Checkout main repository
+        uses: actions/checkout@v6
+        with:
+          path: main-repo
+
+      - name: Clone GitHub Wiki
+        env:
+          WIKI_TOKEN: ${{ secrets.WIKI_TOKEN }}
+        run: |
+          git clone "https://x-access-token:${WIKI_TOKEN}@github.com/${{ github.repository }}.wiki.git" wiki-repo
+
+      - name: Synchronize wiki content
+        run: |
+          rsync -av --delete --exclude '.git' main-repo/wiki/ wiki-repo/
+
+      - name: Commit and push Wiki changes
+        run: |
+          cd wiki-repo
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if [ -n "$(git status --porcelain)" ]; then
+            git add -A
+            git commit -m "docs(wiki): sync from main (${{ github.sha }})"
+            git push origin HEAD
+            echo "Wiki successfully synchronized."
+          else
+            echo "Wiki is already up to date. No changes to commit."
+          fi
