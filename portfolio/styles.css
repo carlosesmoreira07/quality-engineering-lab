@@ -633,6 +633,17 @@ a:hover {
   text-decoration: none;
 }
 
+.btn-table.disabled,
+.button.disabled {
+  background: var(--surface-raised);
+  color: var(--muted);
+  border: 1px solid var(--line);
+  cursor: not-allowed;
+  opacity: 0.65;
+  pointer-events: none;
+  font-style: italic;
+}
+
 /* MOBILE: Cards Verticais Touch-Friendly (Ocultos por padrão em desktop) */
 .runs-cards-list {
   display: none;

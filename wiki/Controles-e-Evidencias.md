@@ -1,5 +1,3 @@
-
-
 ## Do risco à decisão
 
 Cada validação deve responder quatro perguntas:

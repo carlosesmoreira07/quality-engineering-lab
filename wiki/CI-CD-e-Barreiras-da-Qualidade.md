@@ -1,5 +1,3 @@
-
-
 ## Dois momentos, duas decisões
 
 ### Antes do merge: Quality Gate

@@ -1,5 +1,3 @@
-
-
 ## Princípio central
 
 O nome do risco de negócio vem primeiro. Identificadores como `RISK-002` permanecem apenas como referência técnica para rastreabilidade entre estratégia, testes e relatórios.

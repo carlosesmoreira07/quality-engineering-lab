@@ -1,5 +1,3 @@
-
-
 ## O problema
 
 Testes isolados podem informar que uma funcionalidade passou sem explicar quais perdas foram evitadas, qual confiança foi produzida ou por que uma mudança pode avançar. Isso dificulta a decisão de produto e tecnologia.

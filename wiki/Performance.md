@@ -1,5 +1,3 @@
-
-
 ## Pergunta de negócio
 
 A jornada de descoberta de produto (Home → Catálogo → Busca → Produto) continua disponível, correta e com tempo de resposta previsível no perfil observado?

@@ -1,5 +1,101 @@
 [
   {
+    "runId": "32941271150",
+    "runNumber": "3",
+    "timestamp": "2026-08-26T06:17:00.000Z",
+    "timestampFormatted": "26/08/2026, 03:17:00",
+    "status": "APROVADO",
+    "gatePassed": true,
+    "branch": "main",
+    "commit": "bb11f44",
+    "type": "Validação Noturna",
+    "context": {
+      "title": "Validação Noturna · Run #3",
+      "url": "https://github.com/carlosesmoreira07/quality-engineering-lab/actions/runs/32941271150",
+      "label": "Validação contínua da branch main · EverShop 2.2.1"
+    },
+    "stats": {
+      "totalTests": 10,
+      "passedTests": 10,
+      "failedTests": 0,
+      "evidenceCount": 13,
+      "durationMs": 30120.0,
+      "durationFormatted": "30.1 s"
+    },
+    "suites": {
+      "functional": {
+        "total": 6,
+        "passed": 6,
+        "approved": true
+      },
+      "security": {
+        "total": 4,
+        "passed": 4,
+        "approved": true
+      },
+      "performance": {
+        "approved": true,
+        "p95": "55 ms",
+        "errorRate": "0.0%"
+      }
+    },
+    "files": {
+      "pdfReport": null,
+      "pdfLatest": null,
+      "pdfPath": null,
+      "pdfLatestPath": null,
+      "playwrightReport": null
+    }
+  },
+  {
+    "runId": "32891975808",
+    "runNumber": "2",
+    "timestamp": "2026-08-25T14:30:15.000Z",
+    "timestampFormatted": "25/08/2026, 11:30:15",
+    "status": "APROVADO",
+    "gatePassed": true,
+    "branch": "main",
+    "commit": "075d120",
+    "type": "Validação Noturna",
+    "context": {
+      "title": "Validação Noturna · Run #2",
+      "url": "https://github.com/carlosesmoreira07/quality-engineering-lab/actions/runs/32891975808",
+      "label": "Validação contínua da branch main · EverShop 2.2.1"
+    },
+    "stats": {
+      "totalTests": 10,
+      "passedTests": 10,
+      "failedTests": 0,
+      "evidenceCount": 13,
+      "durationMs": 29840.0,
+      "durationFormatted": "29.8 s"
+    },
+    "suites": {
+      "functional": {
+        "total": 6,
+        "passed": 6,
+        "approved": true
+      },
+      "security": {
+        "total": 4,
+        "passed": 4,
+        "approved": true
+      },
+      "performance": {
+        "approved": true,
+        "p95": "55 ms",
+        "errorRate": "0.0%"
+      }
+    },
+    "files": {
+      "pdfReport": null,
+      "pdfLatest": null,
+      "pdfPath": null,
+      "pdfLatestPath": null,
+      "playwrightReport": null
+    }
+  },
+  {
     "runId": "32820074767",
     "runNumber": "1",
     "timestamp": "2026-08-25T07:09:21.348Z",
