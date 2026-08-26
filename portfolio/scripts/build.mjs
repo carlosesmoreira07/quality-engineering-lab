@@ -774,9 +774,9 @@ const indexHtml = `<!doctype html>
               <th>Execução</th>
               <th>Data / Hora</th>
               <th>Contexto</th>
-              <th>Status</th>
-              <th>Testes</th>
-              <th>Duração</th>
+              <th class="col-center">Status</th>
+              <th class="col-center">Testes</th>
+              <th class="col-center">Duração</th>
               <th>Ações</th>
             </tr>
           </thead>
@@ -793,32 +793,34 @@ const indexHtml = `<!doctype html>
                   ${i === 0 ? '<strong>#Mais Recente</strong>' : `#${escapeHtml(r.runNumber)}`}
                 </td>
                 <td class="cell-time">${escapeHtml(r.timestampFormatted)}</td>
-                <td>
+                <td class="cell-context">
                   <a href="${escapeHtml(r.context?.url ?? '#')}" target="_blank" rel="noopener noreferrer">
                     ${escapeHtml(r.context?.title ?? r.branch)}
                   </a>
                 </td>
-                <td>
+                <td class="col-center">
                   <span class="cell-status-tag ${r.status === 'APROVADO' ? 'pass' : 'fail'}">
                     ${escapeHtml(r.status)}
                   </span>
                 </td>
-                <td>${r.stats.passedTests}/${r.stats.totalTests}</td>
-                <td>${escapeHtml(r.stats.durationFormatted)}</td>
-                <td class="cell-actions">
-                  ${hasPdf ? `
-                    <button class="btn-table preview-btn" data-open-pdf data-pdf-url="${escapeHtml(runPdf)}" data-pdf-title="Quality Report — Execução #${escapeHtml(r.runNumber)} (${escapeHtml(r.timestampFormatted)})" type="button" title="Visualizar relatório em PDF">
-                      ${eyeIconSvg}
-                      <span>Visualizar</span>
-                    </button>
-                  ` : `
-                    <span class="btn-table disabled" title="Evidência não anexada ou expirada">Evidência indisponível</span>
-                  `}
-                  ${hasPlaywright ? `
-                    <a class="btn-table view" href="${escapeHtml(runPlaywright)}" target="_blank" rel="noopener noreferrer">
-                      Detalhes ↗
-                    </a>
-                  ` : ''}
+                <td class="col-center cell-mono">${r.stats.passedTests}/${r.stats.totalTests}</td>
+                <td class="col-center cell-mono">${escapeHtml(r.stats.durationFormatted)}</td>
+                <td class="cell-actions-col">
+                  <div class="cell-actions">
+                    ${hasPdf ? `
+                      <button class="btn-table preview-btn" data-open-pdf data-pdf-url="${escapeHtml(runPdf)}" data-pdf-title="Quality Report — Execução #${escapeHtml(r.runNumber)} (${escapeHtml(r.timestampFormatted)})" type="button" title="Visualizar relatório em PDF">
+                        ${eyeIconSvg}
+                        <span>Visualizar</span>
+                      </button>
+                    ` : `
+                      <span class="btn-table disabled" title="Evidência não anexada ou expirada">Evidência indisponível</span>
+                    `}
+                    ${hasPlaywright ? `
+                      <a class="btn-table view" href="${escapeHtml(runPlaywright)}" target="_blank" rel="noopener noreferrer">
+                        Detalhes ↗
+                      </a>
+                    ` : ''}
+                  </div>
                 </td>
               </tr>
             `;
