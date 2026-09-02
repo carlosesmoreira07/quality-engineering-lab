@@ -3,10 +3,10 @@
   --surface: #111713;
   --surface-raised: #16201a;
   --surface-hover: #1c2a22;
-  --mint: #9bf2ba;
-  --mint-dim: rgba(155, 242, 186, 0.12);
-  --green: #28a745;
-  --green-glow: rgba(40, 167, 69, 0.18);
+  --mint: #4afa8a;
+  --mint-dim: rgba(74, 250, 138, 0.12);
+  --green: #3cd472;
+  --green-glow: rgba(74, 250, 138, 0.18);
   --red: #d92d20;
   --red-glow: rgba(217, 45, 32, 0.18);
   --amber: #f6c56f;
@@ -41,7 +41,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: radial-gradient(circle at 50% 0%, rgba(155, 242, 186, 0.04) 0%, transparent 60%), var(--canvas);
+  background: radial-gradient(circle at 50% 0%, rgba(74, 250, 138, 0.04) 0%, transparent 60%), var(--canvas);
   overflow-x: hidden;
   width: 100%;
 }
@@ -75,8 +75,8 @@ a:hover {
 /* Header */
 .site-header {
   border-bottom: 1px solid var(--line);
-  background: rgba(11, 15, 13, 0.85);
-  backdrop-filter: blur(12px);
+  background: rgba(9, 12, 10, 0.94);
+  backdrop-filter: blur(14px);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -85,6 +85,7 @@ a:hover {
 
 .header-inner {
   max-width: 1200px;
+  min-height: 4.4rem;
   margin: 0 auto;
   padding: 0.85rem 1.5rem;
   display: flex;
@@ -98,22 +99,34 @@ a:hover {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  text-decoration: none;
+  text-decoration: none !important;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.brand:hover {
+  text-decoration: none !important;
+}
+
+.brand:hover .brand-text strong,
+.brand:hover .brand-text small {
+  text-decoration: none !important;
   color: var(--ink);
 }
 
 .brand-mark {
-  width: 2rem;
-  height: 2rem;
-  background: linear-gradient(135deg, var(--mint), #4ade80);
-  color: #050806;
-  font-weight: 900;
-  font-size: 1.15rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  box-shadow: 0 0 12px rgba(155, 242, 186, 0.3);
+  width: 2.1rem;
+  height: 2.1rem;
+  background: var(--mint);
+  color: #050c08;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: 0.82rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.35rem 0.35rem 0.85rem 0.35rem;
+  flex-shrink: 0;
+  box-shadow: none;
 }
 
 .brand-text strong {
@@ -156,7 +169,7 @@ a:hover {
 .nav-link.active {
   color: var(--mint);
   background: var(--mint-dim);
-  border: 1px solid rgba(155, 242, 186, 0.25);
+  border: 1px solid rgba(74, 250, 138, 0.25);
 }
 
 .nav-link.external {
@@ -191,16 +204,16 @@ a:hover {
   background: var(--mint-dim);
   padding: 0.25rem 0.75rem;
   border-radius: 999px;
-  border: 1px solid rgba(155, 242, 186, 0.2);
+  border: 1px solid rgba(74, 250, 138, 0.2);
   margin-bottom: 0.85rem;
 }
 
 .live-pulse {
   width: 8px;
   height: 8px;
-  background: var(--green);
+  background: var(--mint);
   border-radius: 50%;
-  box-shadow: 0 0 8px var(--green);
+  box-shadow: 0 0 8px var(--mint);
   animation: pulse 2s infinite ease-in-out;
 }
 
@@ -281,8 +294,8 @@ a:hover {
 
 .gate-status-pill.pass {
   background: #143820;
-  color: #52e37e;
-  border: 1px solid #1e5a32;
+  color: #4afa8a;
+  border: 1px solid rgba(74, 250, 138, 0.3);
 }
 
 .gate-status-pill.fail {
@@ -369,10 +382,31 @@ a:hover {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
+  text-decoration: none !important;
+  color: inherit;
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+  cursor: pointer;
+}
+
+.pillar-summary-card:hover {
+  background: var(--surface-hover);
+  transform: translateY(-3px);
+  text-decoration: none !important;
 }
 
 .pillar-summary-card.pass { border-top: 3px solid var(--green); }
 .pillar-summary-card.fail { border-top: 3px solid var(--red); }
+
+.psc-action {
+  margin-top: auto;
+  padding-top: 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--mint);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
 
 .psc-top {
   display: flex;
@@ -426,12 +460,12 @@ a:hover {
 
 .button.primary {
   background: var(--mint);
-  color: #060a08;
+  color: #050c08;
 }
 
 .button.primary:hover {
-  background: #bbf7d0;
-  box-shadow: 0 0 16px rgba(155, 242, 186, 0.4);
+  background: #6dffaa;
+  box-shadow: 0 0 16px rgba(74, 250, 138, 0.4);
   text-decoration: none;
 }
 
