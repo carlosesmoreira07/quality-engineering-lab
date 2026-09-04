@@ -87,5 +87,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (event.key === 'Escape' && modal && modal.classList.contains('open')) {
       closePdfModal();
     }
+    if ((event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'C')) {
+      event.preventDefault();
+    }
   });
 });
+

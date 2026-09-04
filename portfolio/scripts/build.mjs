@@ -528,8 +528,8 @@ function headerMarkup() {
   return `
     <header class="site-header" role="banner" id="top">
       <div class="header-inner">
-        <a class="brand" href="index.html" aria-label="Moreira Tech — Central de Evidências de Qualidade">
-          <span class="brand-mark" aria-hidden="true">M</span>
+        <a class="brand" href="index.html" aria-label="Moreira Tech: início">
+          <span class="brand-mark" aria-hidden="true">MT</span>
           <span class="brand-text">
             <strong>Moreira Tech</strong>
             <small>Central de Evidências</small>
@@ -593,7 +593,7 @@ function footerMarkup() {
             </a>
           </div>
           <div class="footer-meta-line">
-            <span>© ${new Date().getFullYear()} Moreira Tech</span>
+            <span>© ${new Date().getFullYear()} <strong class="footer-brand">Moreira Tech</strong></span>
             <span class="footer-sep" aria-hidden="true">·</span>
             <a class="footer-link external" href="https://demo.evershop.io/" target="_blank" rel="noopener noreferrer">
               EverShop 2.2.1 <span aria-hidden="true">↗</span>
@@ -658,29 +658,32 @@ function runPillarsMarkup(run) {
 
   return `
     <div class="pillars-summary-grid">
-      <div class="pillar-summary-card ${func.approved ? 'pass' : 'fail'}">
+      <a class="pillar-summary-card ${func.approved ? 'pass' : 'fail'}" href="https://github.com/carlosesmoreira07/quality-engineering-lab/tree/main/quality/tests/web" target="_blank" rel="noopener noreferrer">
         <div class="psc-top">
           <span class="psc-title">Funcional &amp; Regressivo</span>
           <span class="psc-status">${func.passed}/${func.total} Aprovados</span>
         </div>
         <p>Jornadas críticas de vitrine, variações de preço, carrinho e integridade transacional de pedidos.</p>
-      </div>
+        <span class="psc-action">Ver no GitHub ↗</span>
+      </a>
 
-      <div class="pillar-summary-card ${sec.approved ? 'pass' : 'fail'}">
+      <a class="pillar-summary-card ${sec.approved ? 'pass' : 'fail'}" href="https://github.com/carlosesmoreira07/quality-engineering-lab/blob/main/quality/tests/api/security/authorization-boundaries.spec.ts" target="_blank" rel="noopener noreferrer">
         <div class="psc-top">
           <span class="psc-title">Segurança &amp; Acessos</span>
           <span class="psc-status">${sec.passed}/${sec.total} Aprovados</span>
         </div>
         <p>Isolamento horizontal entre clientes, proteção de dados e blindagem de rotas administrativas.</p>
-      </div>
+        <span class="psc-action">Ver no GitHub ↗</span>
+      </a>
 
-      <div class="pillar-summary-card ${perf.approved ? 'pass' : 'fail'}">
+      <a class="pillar-summary-card ${perf.approved ? 'pass' : 'fail'}" href="https://github.com/carlosesmoreira07/quality-engineering-lab/blob/main/quality/performance/scenarios/smoke.js" target="_blank" rel="noopener noreferrer">
         <div class="psc-top">
           <span class="psc-title">Performance Operacional</span>
           <span class="psc-status">${perf.errorRate} erros</span>
         </div>
         <p>95% das respostas em até ${escapeHtml(p95Value)} na jornada de descoberta de produto sem indisponibilidade.</p>
-      </div>
+        <span class="psc-action">Ver no GitHub ↗</span>
+      </a>
     </div>
   `;
 }
@@ -698,7 +701,7 @@ const indexHtml = `<!doctype html>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="dark" />
   <meta name="description" content="Resultados, evidências e decisões de qualidade gerados automaticamente para o EverShop 2.2.1." />
-  <title>Central de Evidências de Qualidade — Moreira Tech</title>
+  <title>Central de Evidências de Qualidade: Moreira Tech</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -905,7 +908,7 @@ await writeFile(path.join(outputDir, 'index.html'), indexHtml, 'utf8');
 // ----------------------------------------------------
 const requiredTokens = [
   '<html lang="pt-BR">',
-  '<title>Central de Evidências de Qualidade — Moreira Tech</title>',
+  '<title>Central de Evidências de Qualidade: Moreira Tech</title>',
   'name="description"',
   'Resultados, evidências e decisões de qualidade gerados automaticamente.',
   'Detalhes ↗',

@@ -20,6 +20,12 @@ O laboratório usa uma plataforma de comércio eletrônico realista para exercit
 | QA | [Estratégia de Qualidade](Estrategia-de-Qualidade) | riscos, controles, cobertura e evidências |
 | QA em início de carreira | [Como Executar](Como-Executar) | caminho guiado para rodar e interpretar os resultados |
 
+## Laboratórios Práticos
+
+- **[Laboratório 1: Estratégia Baseada em Risco](Laboratorio-1-Estrategia-e-Risco):** modelagem de impacto financeiro, priorização técnica e SUT baseline real.
+- **[Laboratório 2: Automação Cross-Domain e Quality Gates](Laboratorio-2-Automacao-e-Quality-Gates):** sincronização Playwright entre Admin e Storefront com barreira determinística no CI/CD.
+- **[Laboratório 3: Performance com K6 e Segurança](Laboratorio-3-Performance-e-Seguranca):** thresholds de tempo de resposta em carga e proteção contínua de limites de autorização de API.
+
 ## Capacidades disponíveis
 
 - validações funcionais Web, API e integração;
