@@ -593,7 +593,7 @@ function footerMarkup() {
             </a>
           </div>
           <div class="footer-meta-line">
-            <span>© ${new Date().getFullYear()} Moreira Tech</span>
+            <span>© ${new Date().getFullYear()} <strong class="footer-brand">Moreira Tech</strong></span>
             <span class="footer-sep" aria-hidden="true">·</span>
             <a class="footer-link external" href="https://demo.evershop.io/" target="_blank" rel="noopener noreferrer">
               EverShop 2.2.1 <span aria-hidden="true">↗</span>

@@ -1010,16 +1010,22 @@ td.cell-actions-col {
 
 .footer-link {
   color: var(--ink-secondary);
-  text-decoration: none;
+  text-decoration: none !important;
   transition: color 0.15s ease;
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
+  cursor: pointer;
 }
 
 .footer-link:hover {
   color: var(--mint);
-  text-decoration: underline;
+  text-decoration: none !important;
+}
+
+.footer-brand {
+  color: inherit;
+  font-weight: 700;
 }
 
 /* ----------------------------------------------------
